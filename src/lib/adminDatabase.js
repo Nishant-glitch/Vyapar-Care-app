@@ -1009,3 +1009,206 @@ export async function sendBulkNotification(title, message, type = 'info') {
   }
   return { success: true };
 }
+
+/* ==========================================================================
+   14. SERVICES & DYNAMIC PRICING CONFIGURATION
+   ========================================================================== */
+export const DEFAULT_SERVICES_DATA = [
+  {
+    key: 'gst',
+    name: 'GST Services',
+    detail_title: 'GST Registration',
+    description: 'New GST Registration for Proprietorship, Partnership or Private Limited.',
+    fee: 10000,
+    advance_percent: 50,
+    processing_days: '3-5 Working Days',
+    icon: '📋',
+    included: ['GST Number', 'GST Certificate', 'All Government Fees'],
+    is_active: true,
+  },
+  {
+    key: 'plc',
+    name: 'Company Registration',
+    detail_title: 'Private Limited Company Registration',
+    description: 'Incorporate your Private Limited Company with MCA.',
+    fee: 15000,
+    advance_percent: 50,
+    processing_days: '7-10 Working Days',
+    icon: '🏢',
+    included: ['Certificate of Incorporation', 'PAN & TAN', 'DIN for 2 Directors', 'All Government Fees'],
+    is_active: true,
+  },
+  {
+    key: 'trademark',
+    name: 'Trademark Registration',
+    detail_title: 'Trademark Registration',
+    description: 'Protect your brand name and logo with a registered trademark.',
+    fee: 8000,
+    advance_percent: 50,
+    processing_days: '5-7 Working Days',
+    icon: '™️',
+    included: ['Trademark Application', 'TM Number', 'Government Fees (1 class)'],
+    is_active: true,
+  },
+  {
+    key: 'fssai',
+    name: 'FSSAI License',
+    detail_title: 'FSSAI Food License',
+    description: 'Food business license registration for manufacturers, traders and restaurants.',
+    fee: 5000,
+    advance_percent: 50,
+    processing_days: '5-7 Working Days',
+    icon: '🍽️',
+    included: ['FSSAI Registration Certificate', 'Application Filing', 'Government Fees'],
+    is_active: true,
+  },
+  {
+    key: 'udyam',
+    name: 'MSME / Udyam',
+    detail_title: 'MSME / Udyam Registration',
+    description: 'Udyam registration for micro, small and medium enterprises.',
+    fee: 2000,
+    advance_percent: 50,
+    processing_days: '1-2 Working Days',
+    icon: '🏭',
+    included: ['Udyam Certificate', 'Udyam Number', 'Application Filing'],
+    is_active: true,
+  },
+  {
+    key: 'itr',
+    name: 'ITR Filing',
+    detail_title: 'Income Tax Return Filing',
+    description: 'Annual income tax return filing for individuals and businesses.',
+    fee: 3000,
+    advance_percent: 50,
+    processing_days: '2-3 Working Days',
+    icon: '📄',
+    included: ['ITR Filing', 'Acknowledgment (ITR-V)', 'Computation Sheet'],
+    is_active: true,
+  },
+  {
+    key: 'iec',
+    name: 'IEC / Import Export',
+    detail_title: 'Import Export Code (IEC)',
+    description: 'IEC registration required for import and export businesses.',
+    fee: 4000,
+    advance_percent: 50,
+    processing_days: '3-5 Working Days',
+    icon: '🌐',
+    included: ['IEC Certificate', 'DGFT Application', 'Government Fees'],
+    is_active: true,
+  },
+  {
+    key: 'other',
+    name: 'Other Services',
+    detail_title: 'Other Services',
+    description: 'Tell us your requirement and our team will guide you.',
+    fee: 2500,
+    advance_percent: 50,
+    processing_days: 'Varies',
+    icon: '⚙️',
+    included: ['Expert Consultation', 'Document Guidance'],
+    is_active: true,
+  },
+];
+
+export async function getServiceFees() {
+  try {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      return data;
+    }
+  } catch (err) {
+    console.warn('Error fetching service fees:', err.message);
+  }
+  return [];
+}
+
+export async function updateServiceFee(serviceIdOrName, newFee) {
+  try {
+    const supabase = createAdminClient();
+    const parsedFee = Number(newFee);
+    const { data, error } = await supabase
+      .from('services')
+      .update({ fee: parsedFee })
+      .or(`id.eq.${serviceIdOrName},name.eq.${serviceIdOrName},detail_title.eq.${serviceIdOrName}`)
+      .select();
+
+    if (!error) return { success: true, data };
+    return { success: false, error: error.message };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function updateAllServiceFees(feeMap) {
+  try {
+    const supabase = createAdminClient();
+    const updates = Object.entries(feeMap).map(async ([keyOrId, newFee]) => {
+      const parsedFee = Number(newFee);
+      const def = DEFAULT_SERVICES_DATA.find((d) => d.key === keyOrId);
+      const name = def ? def.name : keyOrId;
+      const detailTitle = def ? def.detail_title : keyOrId;
+
+      return supabase
+        .from('services')
+        .update({ fee: parsedFee })
+        .or(`id.eq.${keyOrId},name.eq.${name},detail_title.eq.${detailTitle}`);
+    });
+
+    await Promise.all(updates);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function seedServicesTable() {
+  try {
+    const supabase = createAdminClient();
+    for (const s of DEFAULT_SERVICES_DATA) {
+      const { data: existing } = await supabase
+        .from('services')
+        .select('id')
+        .or(`name.eq.${s.name},detail_title.eq.${s.detail_title}`)
+        .maybeSingle();
+
+      if (existing?.id) {
+        await supabase
+          .from('services')
+          .update({
+            detail_title: s.detail_title,
+            description: s.description,
+            fee: s.fee,
+            advance_percent: s.advance_percent,
+            processing_days: s.processing_days,
+            icon: s.icon,
+            included: s.included,
+            is_active: true,
+          })
+          .eq('id', existing.id);
+      } else {
+        await supabase.from('services').insert({
+          name: s.name,
+          detail_title: s.detail_title,
+          description: s.description,
+          fee: s.fee,
+          advance_percent: s.advance_percent,
+          processing_days: s.processing_days,
+          icon: s.icon,
+          included: s.included,
+          is_active: true,
+        });
+      }
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
