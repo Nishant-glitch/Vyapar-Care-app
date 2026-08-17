@@ -54,7 +54,7 @@ export default function UsersListPage() {
       label: 'Booked Services',
       render: (val) => (
         <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800 text-xs font-bold">
-          {val || 1} Applications
+          {val || 0} Applications
         </span>
       ),
     },

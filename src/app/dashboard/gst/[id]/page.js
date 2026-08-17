@@ -85,7 +85,18 @@ export default function GSTDetailPage({ params }) {
   };
 
   if (loading) return <LoadingSkeleton type="detail" />;
-  if (!app) return <div>Application not found.</div>;
+  if (!app) {
+    return (
+      <div className="admin-card text-center py-12">
+        <div className="text-4xl mb-2">🔍</div>
+        <h3 className="text-base font-bold text-slate-800 mb-1">Application Not Found</h3>
+        <p className="text-xs text-slate-500 mb-4">No GST application found with ID: {id}</p>
+        <Link href="/dashboard/gst" className="px-4 py-2 bg-[#1B2B5E] text-white text-xs font-bold rounded-lg inline-block hover:bg-[#283E80] transition-colors">
+          ← Back to GST Applications
+        </Link>
+      </div>
+    );
+  }
 
   const docEntries = Object.entries(app.documents || {});
 

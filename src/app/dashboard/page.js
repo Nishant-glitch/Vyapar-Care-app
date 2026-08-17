@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getDashboardStats, getRecentApplications } from '@/lib/adminDatabase';
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils';
 import StatusBadge from '@/components/StatusBadge';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
+import { useRealtimeSync } from '@/lib/useRealtimeSync';
 
 export default function DashboardHomePage() {
   const router = useRouter();
@@ -14,23 +15,44 @@ export default function DashboardHomePage() {
   const [recentApps, setRecentApps] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [statsData, appsData] = await Promise.all([
-          getDashboardStats(),
-          getRecentApplications(20),
-        ]);
-        setStats(statsData);
-        setRecentApps(appsData);
-      } catch (err) {
-        console.error('Failed to load dashboard data:', err);
-      } finally {
-        setLoading(false);
-      }
+  const loadData = useCallback(async () => {
+    try {
+      const [statsData, appsData] = await Promise.all([
+        getDashboardStats(),
+        getRecentApplications(20),
+      ]);
+      setStats(statsData);
+      setRecentApps(appsData);
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+    } finally {
+      setLoading(false);
     }
-    loadData();
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Realtime subscription across all service and orders tables
+  useRealtimeSync(
+    [
+      'orders',
+      'gst_applications',
+      'plc_applications',
+      'tm_applications',
+      'fssai_applications',
+      'iec_applications',
+      'itr_applications',
+      'udyam_applications',
+      'other_service_requests',
+      'payments',
+    ],
+    () => {
+      console.log('Realtime update detected, refreshing dashboard...');
+      loadData();
+    }
+  );
 
   const getServiceBadge = (serviceCode, serviceType) => {
     const map = {
@@ -152,22 +174,22 @@ export default function DashboardHomePage() {
               </div>
             </div>
             <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-              <div className="text-xs text-emerald-700 font-semibold mb-1">This Month Collection</div>
+              <div className="text-xs text-emerald-700 font-semibold mb-1">Total Applications</div>
               <div className="text-2xl font-black text-emerald-800">
-                {formatCurrency(stats?.thisMonthRevenue || stats?.totalRevenue || 0)}
+                {stats?.totalApplications || 0}
               </div>
             </div>
             <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
-              <div className="text-xs text-amber-700 font-semibold mb-1">Growth vs Last Month</div>
+              <div className="text-xs text-amber-700 font-semibold mb-1">Completed & Issued</div>
               <div className="text-2xl font-black text-amber-800">
-                +46.1%
+                {stats?.completed || 0}
               </div>
             </div>
           </div>
 
           <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
-            <span>💡 100% payments synced with Razorpay / UPI gateway</span>
-            <span className="font-semibold text-emerald-600">Active Reconciliation</span>
+            <span>💡 Live Supabase database synchronization active</span>
+            <span className="font-semibold text-emerald-600">Reconciled</span>
           </div>
         </div>
 
@@ -224,61 +246,71 @@ export default function DashboardHomePage() {
             <p className="text-xs text-slate-500">Live incoming applications merged across all 8 service departments</p>
           </div>
           <span className="text-xs font-semibold text-slate-500">
-            Showing latest {recentApps.length} records
+            {recentApps.length > 0 ? `Showing latest ${recentApps.length} records` : '0 records'}
           </span>
         </div>
 
-        <div className="admin-table-container shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Application / Order ID</th>
-                  <th>Applicant / Client Name</th>
-                  <th>Service</th>
-                  <th>Submission Date</th>
-                  <th>Current Status</th>
-                  <th className="text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentApps.map((item, idx) => (
-                  <tr key={item.id || idx} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="font-mono font-bold text-xs text-[#1B2B5E]">
-                      {item.id}
-                    </td>
-                    <td className="font-semibold text-slate-900">
-                      <div>{item.applicant}</div>
-                      {item.name && item.name !== item.applicant && (
-                        <div className="text-[11px] text-slate-500 font-normal truncate max-w-xs">
-                          {item.name}
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      {getServiceBadge(item.serviceCode, item.serviceType)}
-                    </td>
-                    <td className="text-xs text-slate-600">
-                      <div>{formatDate(item.date)}</div>
-                      <div className="text-[10px] text-slate-400">{formatRelativeTime(item.date)}</div>
-                    </td>
-                    <td>
-                      <StatusBadge status={item.status} />
-                    </td>
-                    <td className="text-right">
-                      <Link
-                        href={item.route}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-[#1B2B5E] hover:text-white text-slate-700 text-xs font-bold rounded-lg transition-all"
-                      >
-                        View ➔
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {recentApps.length === 0 ? (
+          <div className="admin-card text-center py-12 border-dashed border-2 border-slate-200 bg-slate-50/50">
+            <div className="text-4xl mb-2">📭</div>
+            <h4 className="text-sm font-bold text-slate-700 mb-1">No Recent Activity</h4>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              Real-time applications submitted by users in the Vyapar Care mobile app will automatically appear here.
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="admin-table-container shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Application / Order ID</th>
+                    <th>Applicant / Client Name</th>
+                    <th>Service</th>
+                    <th>Submission Date</th>
+                    <th>Current Status</th>
+                    <th className="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentApps.map((item, idx) => (
+                    <tr key={item.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="font-mono font-bold text-xs text-[#1B2B5E]">
+                        {item.application_id || item.id}
+                      </td>
+                      <td className="font-semibold text-slate-900">
+                        <div>{item.applicant_name || item.applicant}</div>
+                        {item.business_name && item.business_name !== item.applicant_name && (
+                          <div className="text-[11px] text-slate-500 font-normal truncate max-w-xs">
+                            {item.business_name}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        {getServiceBadge(item.service_code || item.serviceCode, item.service_type || item.serviceType)}
+                      </td>
+                      <td className="text-xs text-slate-600">
+                        <div>{formatDate(item.created_at || item.date)}</div>
+                        <div className="text-[10px] text-slate-400">{formatRelativeTime(item.created_at || item.date)}</div>
+                      </td>
+                      <td>
+                        <StatusBadge status={item.status} />
+                      </td>
+                      <td className="text-right">
+                        <Link
+                          href={item.link || item.route || '/dashboard'}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-[#1B2B5E] hover:text-white text-slate-700 text-xs font-bold rounded-lg transition-all"
+                        >
+                          View ➔
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

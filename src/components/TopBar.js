@@ -1,12 +1,37 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { supabase } from '@/lib/supabase-client';
+import { useRealtimeSync } from '@/lib/useRealtimeSync';
 
 export default function TopBar({ onToggleSidebar }) {
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('read', false);
+      if (!error && typeof count === 'number') {
+        setUnreadCount(count);
+      }
+    } catch {
+      // keep fallback
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [fetchUnreadCount]);
+
+  useRealtimeSync(['notifications'], () => {
+    fetchUnreadCount();
+  });
 
   // Determine dynamic title based on current pathname
   const getPageTitle = () => {
@@ -72,10 +97,11 @@ export default function TopBar({ onToggleSidebar }) {
           className="relative p-2 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
           title="Notifications"
         >
-          <span className="text-lg">🔔</span>
-          <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-extrabold text-white">
-            3
-          </span>
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-500 text-[9px] font-extrabold text-white">
+              {unreadCount}
+            </span>
+          )}
         </Link>
 
         <div className="h-6 w-px bg-slate-200" />

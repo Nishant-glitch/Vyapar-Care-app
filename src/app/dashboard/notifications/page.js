@@ -176,33 +176,41 @@ export default function NotificationsPage() {
               <span>📜</span> Sent Notifications History ({history.length})
             </h3>
 
-            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-              {history.map((item) => (
-                <div
-                  key={item.id}
-                  className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 hover:border-slate-300 transition-all text-xs space-y-1.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900 text-sm">{item.title}</span>
-                      <StatusBadge status={item.type} />
+            {history.length === 0 ? (
+              <div className="text-center py-12 border-dashed border-2 border-slate-200 rounded-xl bg-slate-50/50">
+                <div className="text-3xl mb-1.5">📭</div>
+                <h4 className="text-xs font-bold text-slate-700">No Notifications Sent Yet</h4>
+                <p className="text-[11px] text-slate-400 mt-0.5">Use the form on the left to broadcast alerts or notifications to clients.</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                {history.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 hover:border-slate-300 transition-all text-xs space-y-1.5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900 text-sm">{item.title}</span>
+                        <StatusBadge status={item.type} />
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {formatRelativeTime(item.created_at)}
+                      </span>
                     </div>
-                    <span className="text-[10px] text-slate-400 font-medium">
-                      {formatRelativeTime(item.created_at)}
-                    </span>
-                  </div>
 
-                  <p className="text-slate-600 leading-relaxed font-normal">{item.description}</p>
+                    <p className="text-slate-600 leading-relaxed font-normal">{item.description}</p>
 
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-[11px] text-slate-500">
-                    <div>
-                      Recipient: <span className="font-bold text-slate-800">{item.user_name || 'All Users'}</span>
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-[11px] text-slate-500">
+                      <div>
+                        Recipient: <span className="font-bold text-slate-800">{item.user?.name || item.user_name || 'All Users'}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400">{formatDate(item.created_at, 'dd MMM yyyy, hh:mm a')}</div>
                     </div>
-                    <div className="text-[10px] text-slate-400">{formatDate(item.created_at, 'dd MMM yyyy, hh:mm a')}</div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
