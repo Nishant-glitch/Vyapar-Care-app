@@ -1,10 +1,12 @@
 // Application & Admin Configuration Constants
 
-export const ADMIN_EMAILS = [
-  'admin@vyaparcare.com',
-  'vyaparcareconsultancy@gmail.com',
-  'nishant@vyaparcare.com',
-];
+const envAdminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS
+  ? process.env.NEXT_PUBLIC_ADMIN_EMAILS.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean)
+  : [];
+
+export const ADMIN_EMAILS = envAdminEmails.length > 0
+  ? envAdminEmails
+  : ['vyaparcareconsultancy@gmail.com'];
 
 export const SERVICE_CONFIG = {
   gst: {

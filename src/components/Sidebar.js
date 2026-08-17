@@ -25,6 +25,19 @@ const NAV_ITEMS = [
 export default function Sidebar({ isOpen, onClose }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [adminEmail, setAdminEmail] = React.useState('vyaparcareconsultancy@gmail.com');
+
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem('vyapar_admin_session');
+      if (stored) {
+        const session = JSON.parse(stored);
+        if (session?.email) setAdminEmail(session.email);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -120,9 +133,13 @@ export default function Sidebar({ isOpen, onClose }) {
               <div className="w-8 h-8 rounded-full bg-[#C5991A] text-slate-950 font-bold flex items-center justify-center text-xs shrink-0">
                 VC
               </div>
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-white truncate">Vyapar Admin</div>
-                <div className="text-[10px] text-slate-400 truncate">Super Administrator</div>
+              <div className="min-w-0 flex-1 pr-2">
+                <div className="text-xs font-bold text-white truncate" title={adminEmail}>
+                  {adminEmail.split('@')[0]}
+                </div>
+                <div className="text-[10px] text-[#C5991A] truncate" title={adminEmail}>
+                  {adminEmail}
+                </div>
               </div>
             </div>
 

@@ -1,14 +1,30 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ADMIN_EMAILS, SERVICE_CONFIG } from '@/lib/constants';
+import { supabase } from '@/lib/supabase-client';
 import { formatCurrency } from '@/lib/utils';
 
 export default function SettingsPage() {
-  const [adminName, setAdminName] = useState('Nishant Singh (Super Admin)');
-  const [adminEmail, setAdminEmail] = useState('admin@vyaparcare.com');
+  const [adminName, setAdminName] = useState('Super Administrator');
+  const [adminEmail, setAdminEmail] = useState('vyaparcareconsultancy@gmail.com');
   const [whitelist, setWhitelist] = useState(ADMIN_EMAILS);
   const [newEmail, setNewEmail] = useState('');
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('vyapar_admin_session');
+      if (stored) {
+        const session = JSON.parse(stored);
+        if (session?.email) {
+          setAdminEmail(session.email);
+          setAdminName(session.email.split('@')[0]);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   // Service Pricing state
   const [serviceFees, setServiceFees] = useState({
@@ -28,6 +44,7 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [pwSuccess, setPwSuccess] = useState(false);
   const [pwError, setPwError] = useState('');
+  const [pwLoading, setPwLoading] = useState(false);
 
   // Fee save state
   const [feeSuccess, setFeeSuccess] = useState(false);
@@ -40,10 +57,14 @@ export default function SettingsPage() {
   };
 
   const handleRemoveWhitelist = (emailToRemove) => {
+    if (whitelist.length <= 1) {
+      alert('At least one administrator email must remain in the whitelist.');
+      return;
+    }
     setWhitelist(whitelist.filter((e) => e !== emailToRemove));
   };
 
-  const handleUpdatePassword = (e) => {
+  const handleUpdatePassword = async (e) => {
     e?.preventDefault();
     setPwError('');
     if (newPassword.length < 6) {
@@ -54,11 +75,23 @@ export default function SettingsPage() {
       setPwError('New passwords do not match.');
       return;
     }
-    setPwSuccess(true);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setTimeout(() => setPwSuccess(false), 4000);
+    setPwLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        setPwError(error.message || 'Failed to update password.');
+      } else {
+        setPwSuccess(true);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => setPwSuccess(false), 4000);
+      }
+    } catch (err) {
+      setPwError('An unexpected error occurred while updating password.');
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   const handleSaveFees = () => {
@@ -154,9 +187,14 @@ export default function SettingsPage() {
 
               <button
                 type="submit"
-                className="w-full py-2 bg-[#1B2B5E] hover:bg-[#283E80] text-white text-xs font-bold rounded-lg transition-colors"
+                disabled={pwLoading}
+                className="w-full py-2 bg-[#1B2B5E] hover:bg-[#283E80] text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                Update Password
+                {pwLoading ? (
+                  <span className="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                ) : (
+                  'Update Password'
+                )}
               </button>
             </form>
           </div>
@@ -196,7 +234,7 @@ export default function SettingsPage() {
                 required
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="newadmin@vyaparcare.com"
+                placeholder="admin@example.com"
                 className="admin-input text-xs flex-1"
               />
               <button

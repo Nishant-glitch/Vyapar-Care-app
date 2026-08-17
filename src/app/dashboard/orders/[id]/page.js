@@ -98,7 +98,9 @@ export default function OrderDetailPage({ params }) {
     if (!notifMsg.trim()) return;
     setSendingNotif(true);
     try {
-      await sendNotification(order.user_id || 'usr_001', notifTitle, notifMsg.trim(), notifType);
+      if (order?.user_id) {
+        await sendNotification(order.user_id, notifTitle, notifMsg.trim(), notifType);
+      }
       setNotifSuccess(true);
       setNotifMsg('');
       setTimeout(() => setNotifSuccess(false), 4000);

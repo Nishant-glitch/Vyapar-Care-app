@@ -65,12 +65,14 @@ export default function GSTDetailPage({ params }) {
     if (!missingDocMsg.trim()) return;
     setRequestingDoc(true);
     try {
-      await sendNotification(
-        app.user_id || 'usr_001',
-        `Document Required: ${missingDocType.replace(/_/g, ' ').toUpperCase()}`,
-        missingDocMsg.trim(),
-        'action'
-      );
+      if (app?.user_id) {
+        await sendNotification(
+          app.user_id,
+          `Document Required: ${missingDocType.replace(/_/g, ' ').toUpperCase()}`,
+          missingDocMsg.trim(),
+          'action'
+        );
+      }
       setReqSuccess(true);
       setMissingDocMsg('');
       setTimeout(() => setReqSuccess(false), 4000);
