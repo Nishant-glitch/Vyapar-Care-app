@@ -8,7 +8,7 @@ import { ADMIN_EMAILS } from '@/lib/constants';
 export default function LoginPage() {
   const router = useRouter();
   const [view, setView] = useState('login'); // 'login' | 'forgot_password'
-  
+
   // Login fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -168,7 +168,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="vyaparcareconsultancy@gmail.com"
+                placeholder="example@gmail.com"
                 className="admin-input py-2.5 px-3.5 text-sm font-medium"
               />
             </div>
