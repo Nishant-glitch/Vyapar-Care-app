@@ -110,9 +110,16 @@ export default function ServicesScreen({ navigation }) {
         <View style={[styles.iconCircle, { backgroundColor: item.iconBg }]}>
           <Text style={styles.icon}>{item.icon}</Text>
         </View>
-        <Text style={styles.serviceName} numberOfLines={2}>
-          {item.name}
-        </Text>
+        <View style={{ flex: 1, marginRight: 8 }}>
+          <Text style={styles.serviceName} numberOfLines={2}>
+            {item.name}
+          </Text>
+          {item.fee ? (
+            <Text style={styles.serviceFee}>
+              {`₹${Number(item.fee).toLocaleString('en-IN')}`}
+            </Text>
+          ) : null}
+        </View>
         <Text style={styles.chevron}>›</Text>
       </Pressable>
     );
@@ -237,10 +244,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   serviceName: {
-    flex: 1,
     fontSize: 15,
     fontWeight: 'bold',
     color: COLORS.primaryDark,
+  },
+  serviceFee: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#C5991A',
+    marginTop: 2,
   },
   chevron: {
     fontSize: 24,

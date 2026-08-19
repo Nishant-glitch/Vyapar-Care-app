@@ -29,8 +29,8 @@ export default function OtherPaymentScreen({ navigation }) {
     try {
       const result = await submit(user, isPaid);
       navigation.navigate('OtherConfirmation', {
-        applicationId: result.applicationId || result.id || 'OTHER-2026-000001',
-        submittedAt: result.submittedAt || new Date().toISOString(),
+        applicationId: result?.application_id || result?.applicationId || result?.id || 'OTHER-2026-000001',
+        submittedAt: result?.submittedAt || new Date().toISOString(),
         isPaid,
       });
     } catch (err) {

@@ -5,7 +5,7 @@ import ScreenHeader from '../components/ScreenHeader';
 import { ErrorState, LoadingState } from '../components/StateViews';
 import { COLORS } from '../constants/theme';
 import { useFetch } from '../hooks/useFetch';
-import { getServiceById } from '../lib/database';
+import { getServiceById, getServices } from '../lib/database';
 import { formatINR } from '../utils/currency';
 
 const DEFAULT_SERVICE = {
@@ -193,12 +193,30 @@ export default function ServiceDetailScreen({ navigation, route }) {
   const picked = route.params?.service;
   const serviceId = route.params?.serviceId || picked?.id;
 
-  const needsFetch = !picked?.fee && !!serviceId;
-
   const { data: fetched, loading, error, reload } = useFetch(
-    () => getServiceById(serviceId),
-    [serviceId],
-    { demoData: null, enabled: needsFetch }
+    async () => {
+      if (serviceId) {
+        try {
+          const res = await getServiceById(serviceId);
+          if (res) return res;
+        } catch {}
+      }
+      try {
+        const all = await getServices();
+        if (all && all.length > 0) {
+          const searchName = (picked?.name || picked?.title || serviceId || '').toLowerCase();
+          const match = all.find(
+            (s) =>
+              (serviceId && s.id === serviceId) ||
+              (searchName && (s.name.toLowerCase().includes(searchName) || searchName.includes(s.name.toLowerCase())))
+          );
+          if (match) return match;
+        }
+      } catch {}
+      return picked;
+    },
+    [serviceId, picked?.name, picked?.title],
+    { demoData: picked }
   );
 
   const service = normalize(fetched || picked);

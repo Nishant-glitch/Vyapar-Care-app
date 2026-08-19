@@ -109,26 +109,18 @@ export default function PLCReviewScreen({ navigation }) {
 
       setSubmitting(false);
 
-      if (result && result.applicationId) {
+      if (result && (result.applicationId || result.application_id)) {
         navigation.replace('PLCConfirmation', {
-          applicationId: result.applicationId,
+          applicationId: result.applicationId || result.application_id,
           applicationData: submissionPayload,
         });
       } else {
-        // Fallback demo application ID
-        const demoId = `PLC-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
-        navigation.replace('PLCConfirmation', {
-          applicationId: demoId,
-          applicationData: submissionPayload,
-        });
+        throw new Error('Failed to obtain application ID from server.');
       }
     } catch (err) {
       setSubmitting(false);
-      const demoId = `PLC-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
-      navigation.replace('PLCConfirmation', {
-        applicationId: demoId,
-        applicationData: { applicant, company, calculatedFees },
-      });
+      console.error('PLC submission error:', err);
+      Alert.alert('Submission Error', err.message || 'Failed to submit PLC application. Please try again.');
     }
   };
 

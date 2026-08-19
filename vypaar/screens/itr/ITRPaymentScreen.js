@@ -30,8 +30,8 @@ export default function ITRPaymentScreen({ navigation }) {
     try {
       const result = await submit(user);
       navigation.navigate('ITRConfirmation', {
-        applicationId: result.applicationId || result.id || 'ITR-2026-000001',
-        submittedAt: result.submittedAt || new Date().toISOString(),
+        applicationId: result?.application_id || result?.applicationId || result?.id || 'ITR-2026-000001',
+        submittedAt: result?.submittedAt || new Date().toISOString(),
       });
     } catch (err) {
       Alert.alert('Payment Error', err.message || 'Payment could not be processed.');

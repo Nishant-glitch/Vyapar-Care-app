@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   Pressable,
   ScrollView,
@@ -30,7 +31,7 @@ export default function TMPaymentScreen({ navigation }) {
   const handlePayNow = async () => {
     try {
       const res = await submitApplication(user);
-      const appId = res?.application_id || 'TM-2026-000001';
+      const appId = res?.applicationId || res?.application_id || res?.record?.application_id || 'TM-2026-000001';
 
       // Navigate to PaymentGatewayScreen with TM application context
       navigation.navigate('PaymentGateway', {
@@ -49,6 +50,7 @@ export default function TMPaymentScreen({ navigation }) {
       });
     } catch (err) {
       console.error('Payment submission failed:', err);
+      Alert.alert('Submission Error', err.message || 'Payment / submission failed. Please try again.');
     }
   };
 

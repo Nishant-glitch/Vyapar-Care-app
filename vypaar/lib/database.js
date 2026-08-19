@@ -362,105 +362,57 @@ export function stepsFromStatus(status, createdAt) {
 /* =================== PRIVATE LIMITED COMPANY REGISTRATION ================= */
 /* ========================================================================= */
 
-// In-memory application store for seamless offline/demo resilience
-let _mockPLCApplications = [
-  {
-    id: 'PLC-2026-000101',
-    application_id: 'PLC-2026-000101',
-    status: 'submitted',
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    applicant: {
-      fullName: 'Aarav Sharma',
-      mobile: '9876543210',
-      email: 'aarav.sharma@example.com',
-      state: '07',
-    },
-    company: {
-      proposedName1: 'QuantumByte Technologies Private Limited',
-      proposedName2: 'QuantumByte Innovations Private Limited',
-      registeredState: '07',
-      authorizedCapital: 1000000,
-      paidUpCapital: 500000,
-      directorCount: 2,
-      subscriberCount: 2,
-    },
-    directors: [
-      { fullName: 'Aarav Sharma', pan: 'ABCDE1234F', hasDIN: false },
-      { fullName: 'Pooja Sharma', pan: 'FGHIJ5678K', hasDIN: true, din: '09876543' },
-    ],
-    office: {
-      premisesType: 'rented',
-      line1: 'B-12, Sector 62',
-      city: 'Noida',
-      state: '09',
-      pincode: '201301',
-    },
-    business: {
-      mainActivity: 'it_software',
-      productsServices: 'Cloud Software & Artificial Intelligence',
-    },
-    documents: [
-      { id: 'director_pan__0', label: 'Director 1: PAN Card', status: 'uploaded', required: true },
-      { id: 'director_id__0', label: 'Director 1: Identity Proof', status: 'uploaded', required: true },
-      { id: 'director_address__0', label: 'Director 1: Address Proof', status: 'uploaded', required: true },
-      { id: 'director_photo__0', label: 'Director 1: Photograph', status: 'uploaded', required: true },
-      { id: 'director_dsc__0', label: 'Director 1: Digital Signature Form', status: 'uploaded', required: true },
-      { id: 'director_pan__1', label: 'Director 2: PAN Card', status: 'uploaded', required: true },
-      { id: 'director_id__1', label: 'Director 2: Identity Proof', status: 'uploaded', required: true },
-      { id: 'office_rent_agreement', label: 'Registered Office: Rent Agreement', status: 'uploaded', required: true },
-      { id: 'office_noc', label: 'Registered Office: Owner NOC', status: 'uploaded', required: true },
-      { id: 'office_utility_bill', label: 'Registered Office: Utility Bill', status: 'uploaded', required: true },
-    ],
-    calculatedFees: {
-      totalFee: 15000,
-      advanceAmount: 7500,
-      balanceAmount: 7500,
-      mcaGovtFee: 0,
-    },
-  },
-];
-
 export async function submitPLCApplication(payload) {
   const generatedId = `PLC-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
   const now = new Date().toISOString();
 
-  const record = {
-    id: generatedId,
+  const insertPayload = {
     application_id: generatedId,
+    user_id: payload.userId || payload.user_id || null,
+    applicant: payload.applicant || {},
+    company: payload.company || {},
+    directors: payload.directors || [],
+    subscribers: payload.subscribers || [],
+    office: payload.office || {},
+    business: payload.business || {},
+    calculated_fees: payload.calculatedFees || payload.calculated_fees || {},
     status: 'submitted',
     created_at: now,
-    ...payload,
   };
 
   try {
     const { data, error } = await supabase
       .from('plc_applications')
-      .insert({
-        application_id: generatedId,
-        applicant: payload.applicant,
-        company: payload.company,
-        directors: payload.directors,
-        subscribers: payload.subscribers,
-        office: payload.office,
-        business: payload.business,
-        documents: payload.documents,
-        calculated_fees: payload.calculatedFees,
-        status: 'submitted',
-      })
+      .insert(insertPayload)
       .select()
-      .maybeSingle();
+      .single();
 
     if (error) {
-      console.log('Supabase table plc_applications not ready, saving to memory:', error.message);
+      console.error('Supabase insert failed:', error.message);
+      throw error;
     }
+
+    if (payload.documents && Array.isArray(payload.documents) && payload.documents.length > 0) {
+      const docRows = payload.documents.map((d) => ({
+        application_id: generatedId,
+        document_id: d.id,
+        label: d.label || d.name || d.id,
+        category: d.category || 'general',
+        required: d.required !== false,
+        status: d.status || 'uploaded',
+        file_name: d.file?.name || null,
+        file_size: d.file?.size || null,
+        mime_type: d.file?.mimeType || null,
+      }));
+      const { error: docErr } = await supabase.from('plc_documents').insert(docRows);
+      if (docErr) console.warn('PLC documents insert warning:', docErr.message);
+    }
+
+    return { applicationId: generatedId, application_id: generatedId, record: data };
   } catch (err) {
-    console.log('Using local store fallback for PLC submission');
+    console.error('Supabase insert failed:', err.message);
+    throw err;
   }
-
-  // Prepend to local mock array
-  _mockPLCApplications.unshift(record);
-
-  return { applicationId: generatedId, record };
 }
 
 export async function getPLCApplications() {
@@ -470,14 +422,15 @@ export async function getPLCApplications() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error && data && data.length > 0) {
-      return data;
+    if (error) {
+      console.error('Supabase getPLCApplications failed:', error.message);
+      throw error;
     }
+    return data || [];
   } catch (err) {
-    // Fall back to memory
+    console.error('getPLCApplications error:', err.message);
+    throw err;
   }
-
-  return _mockPLCApplications;
 }
 
 export async function getPLCApplication(applicationId) {
@@ -488,202 +441,116 @@ export async function getPLCApplication(applicationId) {
       .eq('application_id', applicationId)
       .maybeSingle();
 
-    if (!error && data) return data;
-  } catch (err) {}
-
-  return _mockPLCApplications.find(
-    (a) => a.id === applicationId || a.application_id === applicationId
-  ) || null;
+    if (error) {
+      console.error('Supabase getPLCApplication failed:', error.message);
+      throw error;
+    }
+    return data || null;
+  } catch (err) {
+    console.error('getPLCApplication error:', err.message);
+    throw err;
+  }
 }
 
 export async function updatePLCApplicationStatus(applicationId, status) {
   try {
-    await supabase
+    const { data, error } = await supabase
       .from('plc_applications')
       .update({ status, updated_at: new Date().toISOString() })
-      .eq('application_id', applicationId);
-  } catch (err) {}
+      .eq('application_id', applicationId)
+      .select();
 
-  _mockPLCApplications = _mockPLCApplications.map((a) =>
-    a.id === applicationId || a.application_id === applicationId
-      ? { ...a, status }
-      : a
-  );
-
-  return { success: true };
+    if (error) {
+      console.error('Supabase updatePLCApplicationStatus failed:', error.message);
+      throw error;
+    }
+    return { success: true, data };
+  } catch (err) {
+    console.error('updatePLCApplicationStatus error:', err.message);
+    throw err;
+  }
 }
 
 export async function updatePLCDocumentStatus(applicationId, documentId, status, rejectionReason = null) {
   try {
-    await supabase
+    const { data, error } = await supabase
       .from('plc_documents')
       .update({ status, rejection_reason: rejectionReason, updated_at: new Date().toISOString() })
       .eq('application_id', applicationId)
-      .eq('document_id', documentId);
-  } catch (err) {}
+      .eq('document_id', documentId)
+      .select();
 
-  _mockPLCApplications = _mockPLCApplications.map((a) => {
-    if (a.id === applicationId || a.application_id === applicationId) {
-      const updatedDocs = (a.documents || []).map((d) =>
-        d.id === documentId ? { ...d, status, rejectionReason } : d
-      );
-      return { ...a, documents: updatedDocs };
+    if (error) {
+      console.error('Supabase updatePLCDocumentStatus failed:', error.message);
+      throw error;
     }
-    return a;
-  });
-
-  return { success: true };
+    return { success: true, data };
+  } catch (err) {
+    console.error('updatePLCDocumentStatus error:', err.message);
+    throw err;
+  }
 }
 
 export async function requestPLCDocument(applicationId, { documentName, reason }) {
   try {
-    await supabase.from('plc_document_requests').insert({
+    const { error: reqErr } = await supabase.from('plc_document_requests').insert({
       application_id: applicationId,
       document_name: documentName,
       reason,
       status: 'pending',
     });
+    if (reqErr) throw reqErr;
 
     await updatePLCApplicationStatus(applicationId, 'clarification_requested');
-  } catch (err) {}
-
-  _mockPLCApplications = _mockPLCApplications.map((a) => {
-    if (a.id === applicationId || a.application_id === applicationId) {
-      const reqDoc = {
-        id: `requested_${Date.now()}`,
-        label: documentName,
-        category: 'requested',
-        required: true,
-        status: 'required',
-        hint: reason || 'Additional document requested by verification desk',
-      };
-      return {
-        ...a,
-        status: 'clarification_requested',
-        documents: [...(a.documents || []), reqDoc],
-      };
-    }
-    return a;
-  });
-
-  return { success: true };
+    return { success: true };
+  } catch (err) {
+    console.error('requestPLCDocument error:', err.message);
+    throw err;
+  }
 }
 
 /* ========================================================================= */
 /* =================== TRADEMARK REGISTRATION (FORM TM-A) ================== */
 /* ========================================================================= */
 
-let _mockTMApplications = [
-  {
-    id: 'TM-2026-000189',
-    application_id: 'TM-2026-000189',
-    status: 'submitted',
-    created_at: new Date(Date.now() - 43200000).toISOString(),
-    applicantType: 'startup',
-    isStartupClaimed: true,
-    isMSMEClaimed: false,
-    applicantDetails: {
-      applicantLegalName: 'Zenith Labs Private Limited',
-      tradingName: 'Zenith AI Solutions',
-      pan: 'AABCZ1234F',
-      mobile: '9876543210',
-      email: 'legal@zenithlabs.in',
-      address1: 'Plot 45, Cyber City',
-      city: 'Gurugram',
-      state: '06',
-      pinCode: '122002',
-    },
-    markDetails: {
-      markType: 'word_logo',
-      trademarkName: 'ZENITHFLOW',
-      exactSpelling: 'Z-E-N-I-T-H-F-L-O-W',
-      isColourClaimed: true,
-      colourDescription: 'Blue and Violet gradient lettering with white emblem',
-      isOtherLanguage: false,
-      description: 'Software platform for enterprise workflow automation',
-    },
-    selectedClasses: [9, 42],
-    classDescriptions: {
-      9: 'Downloadable software, mobile applications and artificial intelligence algorithms',
-      42: 'Cloud computing services, SaaS platform and software consultancy',
-    },
-    usageDetails: {
-      usageStatus: 'used',
-      firstUseDate: '15/01/2023',
-      firstUsePlace: 'Gurugram, Haryana',
-      goodsServicesUsed: 'Software platform and mobile application',
-      natureOfUse: 'Continuous commercial deployment since 2023',
-    },
-    agentDetails: {
-      isFiledThroughAgent: true,
-      agentName: 'VyaparCare Legal Operations Hub',
-      agentRegNumber: 'IN/PA/2026/001',
-    },
-    documents: [
-      { id: 'pan_card', label: 'Applicant PAN Card', status: 'approved', required: true },
-      { id: 'coi', label: 'Certificate of Incorporation', status: 'approved', required: true },
-      { id: 'startup_cert', label: 'DPIIT Startup Recognition Certificate', status: 'approved', required: true },
-      { id: 'tm_logo', label: 'Trademark Visual Representation', status: 'approved', required: true },
-      { id: 'user_affidavit', label: 'User Affidavit for Prior Use (Notarized)', status: 'uploaded', required: true },
-      { id: 'prior_use_invoices', label: 'Earliest Invoices & Sales Proof', status: 'uploaded', required: true },
-      { id: 'tm_48', label: 'Power of Attorney (Form TM-48)', status: 'uploaded', required: true },
-    ],
-    calculatedFees: {
-      serviceFee: 8000,
-      perClassGovtFee: 4500,
-      numClasses: 2,
-      totalGovtFee: 9000,
-      totalPayable: 17000,
-      advanceAmount: 13000,
-      balanceAmount: 4000,
-      isConcessionCategory: true,
-      feeCategoryLabel: 'Individual / Startup / Small Enterprise',
-    },
-  },
-];
-
-export async function submitTMApplication(payload) {
+export async function submitTMApplication(payload, userId = null) {
   const generatedId = `TM-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
   const now = new Date().toISOString();
 
-  const record = {
-    id: generatedId,
+  const insertPayload = {
     application_id: generatedId,
+    user_id: userId || payload.userId || payload.user_id || null,
+    applicant_type: payload.applicantType || payload.applicant_type || 'individual',
+    is_startup_claimed: Boolean(payload.isStartupClaimed || payload.is_startup_claimed),
+    is_msme_claimed: Boolean(payload.isMSMEClaimed || payload.is_msme_claimed),
+    applicant_details: payload.applicantDetails || payload.applicant_details || {},
+    mark_details: payload.markDetails || payload.mark_details || {},
+    selected_classes: payload.selectedClasses || payload.selected_classes || [],
+    class_descriptions: payload.classDescriptions || payload.class_descriptions || {},
+    usage_details: payload.usageDetails || payload.usage_details || {},
+    agent_details: payload.agentDetails || payload.agent_details || {},
+    documents: payload.documents || [],
+    calculated_fees: payload.calculatedFees || payload.calculated_fees || {},
     status: 'submitted',
     created_at: now,
-    ...payload,
   };
 
   try {
     const { data, error } = await supabase
       .from('tm_applications')
-      .insert({
-        application_id: generatedId,
-        applicant_type: payload.applicantType,
-        is_startup_claimed: payload.isStartupClaimed,
-        is_msme_claimed: payload.isMSMEClaimed,
-        applicant_details: payload.applicantDetails,
-        mark_details: payload.markDetails,
-        selected_classes: payload.selectedClasses,
-        class_descriptions: payload.classDescriptions,
-        usage_details: payload.usageDetails,
-        agent_details: payload.agentDetails,
-        documents: payload.documents,
-        calculated_fees: payload.calculatedFees,
-        status: 'submitted',
-      })
+      .insert(insertPayload)
       .select()
-      .maybeSingle();
+      .single();
 
     if (error) {
-      console.log('Supabase table tm_applications fallback to memory:', error.message);
+      console.error('Supabase insert failed:', error.message);
+      throw error;
     }
+    return { applicationId: generatedId, application_id: generatedId, record: data };
   } catch (err) {
-    console.log('Using local store fallback for TM submission');
+    console.error('Supabase insert failed:', err.message);
+    throw err;
   }
-
-  _mockTMApplications.unshift(record);
-  return { applicationId: generatedId, record };
 }
 
 export async function getTMApplications() {
@@ -693,12 +560,15 @@ export async function getTMApplications() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error && data && data.length > 0) {
-      return data;
+    if (error) {
+      console.error('Supabase getTMApplications failed:', error.message);
+      throw error;
     }
-  } catch (err) {}
-
-  return _mockTMApplications;
+    return data || [];
+  } catch (err) {
+    console.error('getTMApplications error:', err.message);
+    throw err;
+  }
 }
 
 export async function getTMApplicationById(applicationId) {
@@ -709,29 +579,31 @@ export async function getTMApplicationById(applicationId) {
       .eq('application_id', applicationId)
       .maybeSingle();
 
-    if (!error && data) return data;
-  } catch (err) {}
-
-  return (
-    _mockTMApplications.find(
-      (a) => a.id === applicationId || a.application_id === applicationId
-    ) || null
-  );
+    if (error) {
+      console.error('Supabase getTMApplicationById failed:', error.message);
+      throw error;
+    }
+    return data || null;
+  } catch (err) {
+    console.error('getTMApplicationById error:', err.message);
+    throw err;
+  }
 }
 
 export async function updateTMApplicationStatus(applicationId, status) {
   try {
-    await supabase
+    const { data, error } = await supabase
       .from('tm_applications')
       .update({ status, updated_at: new Date().toISOString() })
-      .eq('application_id', applicationId);
-  } catch (err) {}
+      .eq('application_id', applicationId)
+      .select();
 
-  _mockTMApplications = _mockTMApplications.map((a) =>
-    a.id === applicationId || a.application_id === applicationId ? { ...a, status } : a
-  );
-
-  return { success: true };
+    if (error) throw error;
+    return { success: true, data };
+  } catch (err) {
+    console.error('updateTMApplicationStatus error:', err.message);
+    throw err;
+  }
 }
 
 export async function updateTMDocumentStatus(
@@ -741,167 +613,89 @@ export async function updateTMDocumentStatus(
   rejectionReason = null
 ) {
   try {
-    await supabase
-      .from('tm_documents')
-      .update({ status, rejection_reason: rejectionReason, updated_at: new Date().toISOString() })
-      .eq('application_id', applicationId)
-      .eq('document_id', documentId);
-  } catch (err) {}
-
-  _mockTMApplications = _mockTMApplications.map((a) => {
-    if (a.id === applicationId || a.application_id === applicationId) {
-      const updatedDocs = (a.documents || []).map((d) =>
+    const app = await getTMApplicationById(applicationId);
+    if (app && Array.isArray(app.documents)) {
+      const updatedDocs = app.documents.map((d) =>
         d.id === documentId ? { ...d, status, rejectionReason } : d
       );
-      return { ...a, documents: updatedDocs };
-    }
-    return a;
-  });
+      const { data, error } = await supabase
+        .from('tm_applications')
+        .update({ documents: updatedDocs, updated_at: new Date().toISOString() })
+        .eq('application_id', applicationId)
+        .select();
 
-  return { success: true };
+      if (error) throw error;
+      return { success: true, data };
+    }
+    return { success: true };
+  } catch (err) {
+    console.error('updateTMDocumentStatus error:', err.message);
+    throw err;
+  }
 }
 
 export async function requestTMDocument(applicationId, documentName, reason) {
   try {
-    await supabase.from('tm_document_requests').insert({
+    const { error: reqErr } = await supabase.from('tm_document_requests').insert({
       application_id: applicationId,
       document_name: documentName,
       reason,
       status: 'pending',
     });
+    if (reqErr) throw reqErr;
 
     await updateTMApplicationStatus(applicationId, 'clarification_required');
-  } catch (err) {}
-
-  _mockTMApplications = _mockTMApplications.map((a) => {
-    if (a.id === applicationId || a.application_id === applicationId) {
-      const reqDoc = {
-        id: `requested_${Date.now()}`,
-        label: documentName,
-        categoryLabel: 'Clarifications & Additional Documents',
-        required: true,
-        status: 'required',
-        hint: reason || 'Additional document requested by Trademark Examiner',
-      };
-      return {
-        ...a,
-        status: 'clarification_required',
-        documents: [...(a.documents || []), reqDoc],
-      };
-    }
-    return a;
-  });
-
-  return { success: true };
+    return { success: true };
+  } catch (err) {
+    console.error('requestTMDocument error:', err.message);
+    throw err;
+  }
 }
 
 /* ========================================================================= */
 /* FSSAI Food License / Registration (FoSCoS) Applications                   */
 /* ========================================================================= */
 
-let _mockFSSAIApplications = [
-  {
-    id: 'FSSAI-2026-789101',
-    application_id: 'FSSAI-2026-789101',
-    kob: 'restaurant',
-    constitution: 'proprietorship',
-    license_type: 'state',
-    status: 'submitted',
-    created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
-    applicant_details: {
-      businessLegalName: 'Royal Dining Hospitality',
-      tradeName: 'Royal Dining Restaurant',
-      applicantName: 'Vikramaditya Sharma',
-      pan: 'ABCDE1234F',
-      mobile: '9876543210',
-      email: 'contact@royaldining.com',
-      address1: 'Shop 12, Connaught Place',
-      city: 'New Delhi',
-      state: '07',
-      pinCode: '110001',
-    },
-    business_details: {
-      foodBusinessName: 'Royal Dining Restaurant',
-      annualTurnover: '12_to_20_cr',
-      employeeCount: '12',
-    },
-    premises_details: {
-      premisesName: 'Main Restaurant Outlet',
-      address1: 'Shop 12, Connaught Place',
-      city: 'New Delhi',
-      district: 'Central Delhi',
-      state: '07',
-      pinCode: '110001',
-      premisesType: 'rented',
-    },
-    products: [
-      { productName: 'North Indian & Mughlai Cuisines', categoryCode: '16', capacity: '300 Meals/Day' },
-    ],
-    documents: [
-      { id: 'applicant_photo', label: 'Applicant Passport Size Photograph', status: 'uploaded', required: true },
-      { id: 'applicant_pan', label: 'Applicant / Entity PAN Card', status: 'uploaded', required: true },
-      { id: 'premises_rent_agreement', label: 'Rent Agreement / Lease Deed', status: 'uploaded', required: true },
-    ],
-    calculated_fees: {
-      serviceFee: 5000,
-      annualGovtFee: 2000,
-      validityYears: 1,
-      totalGovtFee: 2000,
-      totalPayable: 7000,
-    },
-    eligibility: {
-      licenseType: 'state',
-      label: 'FSSAI State License',
-      badgeColor: '#2563EB',
-      reason: 'Turnover exceeds ₹12 Lakh under FoSCoS restaurant schedule.',
-    },
-  },
-];
-
 export async function submitFSSAIApplication(payload) {
   const generatedId = `FSSAI-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
   const now = new Date().toISOString();
 
-  const record = {
-    id: generatedId,
+  const insertPayload = {
     application_id: generatedId,
+    user_id: payload.userId || payload.user_id || null,
+    kob: payload.kob || 'restaurant',
+    constitution: payload.constitution || 'proprietorship',
+    license_type: payload.licenseType || payload.license_type || 'state',
+    validity_years: Number(payload.validityYears || payload.validity_years || 1),
+    applicant_details: payload.applicantDetails || payload.applicant_details || {},
+    business_details: payload.businessDetails || payload.business_details || {},
+    premises_details: payload.premisesDetails || payload.premises_details || {},
+    products: payload.products || [],
+    specific_details: payload.specificDetails || payload.specific_details || {},
+    documents: payload.documents || [],
+    calculated_fees: payload.calculatedFees || payload.calculated_fees || {},
+    eligibility: payload.eligibility || {},
     status: 'submitted',
     created_at: now,
-    ...payload,
   };
 
   try {
     const { data, error } = await supabase
       .from('fssai_applications')
-      .insert({
-        application_id: generatedId,
-        user_id: payload.userId || null,
-        kob: payload.kob,
-        constitution: payload.constitution,
-        license_type: payload.licenseType,
-        validity_years: payload.validityYears || 1,
-        applicant_details: payload.applicantDetails || {},
-        business_details: payload.businessDetails || {},
-        premises_details: payload.premisesDetails || {},
-        products: payload.products || [],
-        specific_details: payload.specificDetails || {},
-        documents: payload.documents || [],
-        calculated_fees: payload.calculatedFees || {},
-        eligibility: payload.eligibility || {},
-        status: 'submitted',
-        created_at: now,
-      })
+      .insert(insertPayload)
       .select()
       .single();
 
-    if (!error && data) {
-      _mockFSSAIApplications.unshift(data);
-      return { success: true, applicationId: data.application_id, record: data };
+    if (error) {
+      console.error('Supabase insert failed:', error.message);
+      throw error;
     }
-  } catch (err) {}
 
-  _mockFSSAIApplications.unshift(record);
-  return { success: true, applicationId: generatedId, record };
+    return { success: true, applicationId: generatedId, application_id: generatedId, record: data };
+  } catch (err) {
+    console.error('Supabase insert failed:', err.message);
+    throw err;
+  }
 }
 
 export async function getFSSAIApplications() {
@@ -911,12 +705,15 @@ export async function getFSSAIApplications() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error && data && data.length > 0) {
-      return data;
+    if (error) {
+      console.error('Supabase getFSSAIApplications failed:', error.message);
+      throw error;
     }
-  } catch (err) {}
-
-  return _mockFSSAIApplications;
+    return data || [];
+  } catch (err) {
+    console.error('getFSSAIApplications error:', err.message);
+    throw err;
+  }
 }
 
 export async function getFSSAIApplicationById(applicationId) {
@@ -925,16 +722,17 @@ export async function getFSSAIApplicationById(applicationId) {
       .from('fssai_applications')
       .select('*')
       .eq('application_id', applicationId)
-      .single();
+      .maybeSingle();
 
-    if (!error && data) {
-      return data;
+    if (error) {
+      console.error('Supabase getFSSAIApplicationById failed:', error.message);
+      throw error;
     }
-  } catch (err) {}
-
-  return _mockFSSAIApplications.find(
-    (a) => a.id === applicationId || a.application_id === applicationId
-  );
+    return data || null;
+  } catch (err) {
+    console.error('getFSSAIApplicationById error:', err.message);
+    throw err;
+  }
 }
 
 export async function updateFSSAIApplicationStatus(applicationId, status, officialNumber = null) {
@@ -942,195 +740,118 @@ export async function updateFSSAIApplicationStatus(applicationId, status, offici
     const updates = { status, updated_at: new Date().toISOString() };
     if (officialNumber) updates.official_fssai_number = officialNumber;
 
-    await supabase
+    const { data, error } = await supabase
       .from('fssai_applications')
       .update(updates)
-      .eq('application_id', applicationId);
-  } catch (err) {}
+      .eq('application_id', applicationId)
+      .select();
 
-  _mockFSSAIApplications = _mockFSSAIApplications.map((a) => {
-    if (a.id === applicationId || a.application_id === applicationId) {
-      return { ...a, status, official_fssai_number: officialNumber || a.official_fssai_number };
-    }
-    return a;
-  });
-
-  return { success: true };
+    if (error) throw error;
+    return { success: true, data };
+  } catch (err) {
+    console.error('updateFSSAIApplicationStatus error:', err.message);
+    throw err;
+  }
 }
 
 export async function updateFSSAIDocumentStatus(applicationId, documentId, status, rejectionReason = null) {
   try {
     const app = await getFSSAIApplicationById(applicationId);
-    if (app && app.documents) {
+    if (app && Array.isArray(app.documents)) {
       const updatedDocs = app.documents.map((d) =>
         d.id === documentId ? { ...d, status, rejectionReason } : d
       );
 
-      await supabase
+      const { data, error } = await supabase
         .from('fssai_applications')
         .update({ documents: updatedDocs, updated_at: new Date().toISOString() })
-        .eq('application_id', applicationId);
-    }
-  } catch (err) {}
+        .eq('application_id', applicationId)
+        .select();
 
-  _mockFSSAIApplications = _mockFSSAIApplications.map((a) => {
-    if (a.id === applicationId || a.application_id === applicationId) {
-      const updatedDocs = (a.documents || []).map((d) =>
-        d.id === documentId ? { ...d, status, rejectionReason } : d
-      );
-      return { ...a, documents: updatedDocs };
+      if (error) throw error;
+      return { success: true, data };
     }
-    return a;
-  });
-
-  return { success: true };
+    return { success: true };
+  } catch (err) {
+    console.error('updateFSSAIDocumentStatus error:', err.message);
+    throw err;
+  }
 }
 
 export async function requestFSSAIDocument(applicationId, documentName, reason) {
   try {
-    await supabase.from('fssai_document_requests').insert({
+    const { error: reqErr } = await supabase.from('fssai_document_requests').insert({
       application_id: applicationId,
       document_name: documentName,
       reason,
       status: 'pending',
     });
+    if (reqErr) throw reqErr;
 
     await updateFSSAIApplicationStatus(applicationId, 'clarification_required');
-  } catch (err) {}
-
-  _mockFSSAIApplications = _mockFSSAIApplications.map((a) => {
-    if (a.id === applicationId || a.application_id === applicationId) {
-      const reqDoc = {
-        id: `requested_${Date.now()}`,
-        label: documentName,
-        categoryLabel: 'Clarifications & Additional Documents',
-        required: true,
-        status: 'required',
-        hint: reason || 'Additional document requested by Food Safety Examiner',
-      };
-      return {
-        ...a,
-        status: 'clarification_required',
-        documents: [...(a.documents || []), reqDoc],
-      };
-    }
-    return a;
-  });
-
-  return { success: true };
+    return { success: true };
+  } catch (err) {
+    console.error('requestFSSAIDocument error:', err.message);
+    throw err;
+  }
 }
 
 /* ==========================================================================
    GST REGISTRATION DATABASE OPERATIONS (Form GST REG-01)
    ========================================================================== */
 
-let _mockGSTApplications = [
-  {
-    id: 'GST-2026-000101',
-    application_id: 'GST-2026-000101',
-    user_id: 'demo_user_1',
-    status: 'submitted',
-    created_at: new Date(Date.now() - 36000000).toISOString(),
-    constitution: 'proprietorship',
-    registrationReason: 'voluntary',
-    isComposition: false,
-    businessDetails: {
-      legalName: 'Aditya Enterprises',
-      tradeName: 'Aditya Retail Hub',
-      pan: 'ABCDE1234F',
-      commencementDate: '2026-01-01',
-    },
-    promoters: [
-      {
-        id: 'promoter_1',
-        name: 'Aditya Sharma',
-        fatherName: 'Rajendra Sharma',
-        mobile: '9876543210',
-        email: 'aditya@adityahub.in',
-        pan: 'ABCDE1234F',
-        aadhaar: '123456789012',
-        isAuthorizedSignatory: true,
-      },
-    ],
-    premisesDetails: {
-      buildingNumber: 'Shop 14, Main Road',
-      street: 'Sector 18 Market',
-      city: 'Noida',
-      state: '09',
-      pinCode: '201301',
-      possessionType: 'rented',
-      activities: ['retail', 'office'],
-    },
-    goodsServices: [
-      {
-        id: 'item_1',
-        type: 'goods',
-        hsnSacCode: '6203',
-        description: 'Readymade garments and apparel',
-      },
-    ],
-    bankDetails: {
-      accountNumber: '50200012345678',
-      accountType: 'Current',
-      ifsc: 'HDFC0000050',
-      bankName: 'HDFC Bank',
-      branch: 'Sector 18 Noida',
-    },
-    documents: {
-      applicant_photo: { name: 'aditya_photo.jpg', size: 102400 },
-      applicant_pan: { name: 'aditya_pan.pdf', size: 204800 },
-      applicant_aadhaar: { name: 'aditya_aadhaar.pdf', size: 307200 },
-      premises_rent_agreement: { name: 'rent_agreement.pdf', size: 512000 },
-      premises_owner_noc: { name: 'owner_noc_electricity.pdf', size: 409600 },
-      bank_account_proof: { name: 'cancelled_cheque.pdf', size: 153600 },
-    },
-    calculatedFees: {
-      serviceFee: 10000,
-      advancePercent: 50,
-      advanceAmount: 5000,
-      balanceAmount: 5000,
-      totalPayable: 10000,
-    },
-    amountPaid: 5000,
-    paymentPlan: 'advance',
-  },
-];
-
 export async function submitGSTApplication(appData) {
   const appId = `GST-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
-  const record = {
-    id: appId,
+  const insertPayload = {
     application_id: appId,
-    user_id: appData.userId || 'guest_user',
+    user_id: appData.userId || appData.user_id || 'guest_user',
     status: 'submitted',
-    constitution: appData.constitution,
-    registration_reason: appData.registrationReason,
-    is_composition: appData.isComposition,
-    business_details: appData.businessDetails,
-    promoters: appData.promoters,
-    premises_details: appData.premisesDetails,
-    goods_services: appData.goodsServices,
-    bank_details: appData.bankDetails,
-    documents: appData.documents,
-    calculated_fees: appData.calculatedFees,
-    amount_paid: appData.amountPaid,
-    payment_plan: appData.paymentPlan,
-    created_at: new Date().toISOString(),
+    constitution: appData.constitution || 'proprietorship',
+    registration_reason: appData.registrationReason || appData.registration_reason || 'voluntary',
+    is_composition: Boolean(appData.isComposition || appData.is_composition),
+    business_details: appData.businessDetails || appData.business_details || {},
+    promoters: appData.promoters || [],
+    premises_details: appData.premisesDetails || appData.premises_details || {},
+    goods_services: appData.goodsServices || appData.goods_services || [],
+    bank_details: appData.bankDetails || appData.bank_details || {},
+    documents: appData.documents || {},
+    custom_documents: appData.customDocuments || appData.custom_documents || [],
+    calculated_fees: appData.calculatedFees || appData.calculated_fees || {},
+    amount_paid: Number(appData.amountPaid || appData.amount_paid || 0),
+    payment_plan: appData.paymentPlan || appData.payment_plan || 'advance',
   };
 
   try {
     const { data, error } = await supabase
       .from('gst_applications')
-      .insert(record)
+      .insert(insertPayload)
       .select()
       .single();
 
-    if (error) throw error;
-    _mockGSTApplications.unshift(record);
-    return data || record;
+    if (error) {
+      console.error('Supabase insert failed:', error.message);
+      throw error;
+    }
+
+    // Send notification if user logged in
+    if (appData.userId && appData.userId !== 'guest_user') {
+      try {
+        await supabase.from('notifications').insert({
+          user_id: appData.userId,
+          title: 'GST Application Submitted',
+          description: `Your GST Registration application (${appId}) has been successfully submitted and is under scrutiny.`,
+          type: 'info',
+          read: false,
+        });
+      } catch (notifErr) {
+        console.warn('Notification insert warning:', notifErr.message);
+      }
+    }
+
+    return data;
   } catch (err) {
-    _mockGSTApplications.unshift(record);
-    return record;
+    console.error('Supabase insert failed:', err.message);
+    throw err;
   }
 }
 
@@ -1146,13 +867,14 @@ export async function getGSTApplications(userId = null) {
     }
 
     const { data, error } = await query;
-    if (error) throw error;
-    return data || _mockGSTApplications;
-  } catch (err) {
-    if (userId) {
-      return _mockGSTApplications.filter((a) => a.user_id === userId);
+    if (error) {
+      console.error('Supabase getGSTApplications failed:', error.message);
+      throw error;
     }
-    return _mockGSTApplications;
+    return data || [];
+  } catch (err) {
+    console.error('getGSTApplications error:', err.message);
+    throw err;
   }
 }
 
@@ -1162,142 +884,172 @@ export async function getGSTApplicationById(applicationId) {
       .from('gst_applications')
       .select('*')
       .eq('application_id', applicationId)
-      .single();
+      .maybeSingle();
 
-    if (error) throw error;
-    return data || _mockGSTApplications.find((a) => a.id === applicationId || a.application_id === applicationId);
+    if (error) {
+      console.error('Supabase getGSTApplicationById failed:', error.message);
+      throw error;
+    }
+    return data || null;
   } catch (err) {
-    return _mockGSTApplications.find((a) => a.id === applicationId || a.application_id === applicationId) || null;
+    console.error('getGSTApplicationById error:', err.message);
+    throw err;
   }
 }
 
 export async function updateGSTApplicationStatus(applicationId, status, gstin = null) {
   try {
-    await supabase
+    const { data, error } = await supabase
       .from('gst_applications')
       .update({
         status,
         official_gstin: gstin,
         updated_at: new Date().toISOString(),
       })
-      .eq('application_id', applicationId);
-  } catch (err) {}
+      .eq('application_id', applicationId)
+      .select();
 
-  _mockGSTApplications = _mockGSTApplications.map((a) => {
-    if (a.id === applicationId || a.application_id === applicationId) {
-      return { ...a, status, official_gstin: gstin || a.official_gstin };
+    if (error) {
+      console.error('Supabase updateGSTApplicationStatus failed:', error.message);
+      throw error;
     }
-    return a;
-  });
-
-  return { success: true };
+    return { success: true, data };
+  } catch (err) {
+    console.error('updateGSTApplicationStatus error:', err.message);
+    throw err;
+  }
 }
 
 export async function updateGSTDocumentStatus(applicationId, documentId, status, rejectionReason = null) {
-  _mockGSTApplications = _mockGSTApplications.map((a) => {
-    if (a.id === applicationId || a.application_id === applicationId) {
-      const updatedReviews = {
-        ...(a.documentReviews || {}),
-        [documentId]: status,
-      };
-      return { ...a, documentReviews: updatedReviews };
-    }
-    return a;
-  });
+  try {
+    const { data: app, error: fetchErr } = await supabase
+      .from('gst_applications')
+      .select('documents')
+      .eq('application_id', applicationId)
+      .single();
 
-  return { success: true };
+    if (fetchErr) throw fetchErr;
+
+    const docs = app?.documents || {};
+    if (docs[documentId]) {
+      docs[documentId] = {
+        ...(typeof docs[documentId] === 'object' ? docs[documentId] : { url: docs[documentId] }),
+        status,
+        rejectionReason,
+      };
+    } else {
+      docs[documentId] = { status, rejectionReason };
+    }
+
+    const { data, error: updateErr } = await supabase
+      .from('gst_applications')
+      .update({ documents: docs, updated_at: new Date().toISOString() })
+      .eq('application_id', applicationId)
+      .select();
+
+    if (updateErr) throw updateErr;
+    return { success: true, data };
+  } catch (err) {
+    console.error('updateGSTDocumentStatus error:', err.message);
+    throw err;
+  }
 }
 
 export async function requestGSTDocument(applicationId, documentName, reason) {
-  _mockGSTApplications = _mockGSTApplications.map((a) => {
-    if (a.id === applicationId || a.application_id === applicationId) {
-      const requested = {
-        name: documentName,
-        reason,
-        requestedAt: new Date().toISOString(),
-      };
-      return {
-        ...a,
-        status: 'clarification_needed',
-        requestedDocuments: [...(a.requestedDocuments || []), requested],
-      };
-    }
-    return a;
-  });
+  try {
+    const { data: app, error: fetchErr } = await supabase
+      .from('gst_applications')
+      .select('custom_documents')
+      .eq('application_id', applicationId)
+      .single();
 
-  return { success: true };
+    if (fetchErr) throw fetchErr;
+
+    const requested = {
+      id: `req_${Date.now()}`,
+      name: documentName,
+      reason,
+      status: 'requested',
+      requestedAt: new Date().toISOString(),
+    };
+
+    const customDocs = [...(app?.custom_documents || []), requested];
+
+    const { data, error: updateErr } = await supabase
+      .from('gst_applications')
+      .update({
+        custom_documents: customDocs,
+        status: 'clarification_needed',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('application_id', applicationId)
+      .select();
+
+    if (updateErr) throw updateErr;
+    return { success: true, data };
+  } catch (err) {
+    console.error('requestGSTDocument error:', err.message);
+    throw err;
+  }
 }
 
 /* ========================================================================= */
 /* MSME / Udyam Registration Assisted Applications                          */
 /* ========================================================================= */
 
-let _mockUdyamApplications = [
-  {
-    id: 'UDYAM-2026-000101',
-    applicationId: 'UDYAM-2026-000101',
-    application_id: 'UDYAM-2026-000101',
-    userId: 'guest_user',
-    user_id: 'guest_user',
-    applicationStatus: 'submitted',
-    status: 'submitted',
-    amountPaid: 2000,
-    amount_paid: 2000,
-    businessDetails: {
-      enterpriseName: 'Apex Innovations',
-      tradeName: 'Apex Tech',
-      organisationType: 'proprietorship',
-      commencementDate: '2026-01-15',
-      majorActivity: 'services',
-    },
-    aadhaarDetails: {
-      nameAsPerAadhaar: 'Ramesh Kumar',
-      mobile: '9876543210',
-      email: 'ramesh@example.com',
-      isAadhaarVerified: true,
-    },
-    panDetails: {
-      hasPAN: true,
-      panNumber: 'ABCDE1234F',
-      isPANVerified: true,
-      hasGSTIN: 'no',
-    },
-    msmeClassification: {
-      category: 'micro',
-      categoryLabel: 'Micro Enterprise',
-    },
-    created_at: new Date().toISOString(),
-    submittedAt: new Date().toISOString(),
-  },
-];
-
 export async function submitUdyamApplication(appData) {
   const appId = `UDYAM-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
-  const record = {
-    id: appId,
-    applicationId: appId,
+  const insertPayload = {
     application_id: appId,
-    userId: appData.userId || 'guest_user',
-    user_id: appData.userId || 'guest_user',
-    applicationStatus: 'submitted',
+    user_id: appData.userId || appData.user_id || 'guest_user',
     status: 'submitted',
-    ...appData,
-    created_at: new Date().toISOString(),
+    aadhaar_details: appData.aadhaarDetails || appData.aadhaar_details || {},
+    pan_details: appData.panDetails || appData.pan_details || {},
+    business_details: appData.businessDetails || appData.business_details || {},
+    organisation_details: appData.organisationDetails || appData.organisation_details || {},
+    official_address: appData.officialAddress || appData.official_address || {},
+    plant_units: appData.plantUnits || appData.plant_units || [],
+    bank_details: appData.bankDetails || appData.bank_details || {},
+    selected_nic_codes: appData.selectedNicCodes || appData.selected_nic_codes || [],
+    financial_details: appData.financialDetails || appData.financial_details || {},
+    msme_classification: appData.msmeClassification || appData.msme_classification || {},
+    optional_documents: appData.optionalDocuments || appData.optional_documents || {},
+    declaration_accepted: Boolean(appData.declarationAccepted ?? true),
+    calculated_fees: appData.calculatedFees || appData.calculated_fees || {},
+    amount_paid: Number(appData.amountPaid || appData.amount_paid || 2000),
+    payment_status: appData.paymentStatus || appData.payment_status || 'successful',
   };
 
   try {
     const { data, error } = await supabase
       .from('udyam_applications')
-      .insert(record)
+      .insert(insertPayload)
       .select()
       .single();
 
-    if (error) throw error;
-    _mockUdyamApplications.unshift(record);
-    return data || record;
+    if (error) {
+      console.error('Supabase insert failed:', error.message);
+      throw error;
+    }
+
+    if (appData.userId && appData.userId !== 'guest_user') {
+      try {
+        await supabase.from('notifications').insert({
+          user_id: appData.userId,
+          title: 'Udyam Registration Submitted',
+          description: `Your MSME / Udyam application (${appId}) has been successfully submitted.`,
+          type: 'info',
+          read: false,
+        });
+      } catch (notifErr) {
+        console.warn('Notification insert warning:', notifErr.message);
+      }
+    }
+
+    return data;
   } catch (err) {
-    _mockUdyamApplications.unshift(record);
-    return record;
+    console.error('Supabase insert failed:', err.message);
+    throw err;
   }
 }
 
@@ -1313,13 +1065,14 @@ export async function getUdyamApplications(userId = null) {
     }
 
     const { data, error } = await query;
-    if (error) throw error;
-    return data || _mockUdyamApplications;
-  } catch (err) {
-    if (userId) {
-      return _mockUdyamApplications.filter((a) => a.userId === userId || a.user_id === userId);
+    if (error) {
+      console.error('Supabase getUdyamApplications failed:', error.message);
+      throw error;
     }
-    return _mockUdyamApplications;
+    return data || [];
+  } catch (err) {
+    console.error('getUdyamApplications error:', err.message);
+    throw err;
   }
 }
 
@@ -1329,103 +1082,96 @@ export async function getUdyamApplicationById(applicationId) {
       .from('udyam_applications')
       .select('*')
       .eq('application_id', applicationId)
-      .single();
+      .maybeSingle();
 
-    if (error) throw error;
-    return data || _mockUdyamApplications.find((a) => a.id === applicationId || a.applicationId === applicationId);
+    if (error) {
+      console.error('Supabase getUdyamApplicationById failed:', error.message);
+      throw error;
+    }
+    return data || null;
   } catch (err) {
-    return _mockUdyamApplications.find((a) => a.id === applicationId || a.applicationId === applicationId) || null;
+    console.error('getUdyamApplicationById error:', err.message);
+    throw err;
   }
 }
 
 export async function updateUdyamApplicationStatus(applicationId, updates = {}) {
   try {
-    await supabase
+    const { data, error } = await supabase
       .from('udyam_applications')
       .update({
         ...updates,
         updated_at: new Date().toISOString(),
       })
-      .eq('application_id', applicationId);
-  } catch (err) {}
+      .eq('application_id', applicationId)
+      .select();
 
-  _mockUdyamApplications = _mockUdyamApplications.map((a) => {
-    if (a.id === applicationId || a.applicationId === applicationId || a.application_id === applicationId) {
-      return { ...a, ...updates };
-    }
-    return a;
-  });
-
-  return { success: true };
+    if (error) throw error;
+    return { success: true, data };
+  } catch (err) {
+    console.error('updateUdyamApplicationStatus error:', err.message);
+    throw err;
+  }
 }
 
 /* ========================================================================= */
 /* Income Tax Return (ITR) Filing Applications                              */
 /* ========================================================================= */
 
-let _mockITRApplications = [
-  {
-    id: 'ITR-2026-000101',
-    applicationId: 'ITR-2026-000101',
-    application_id: 'ITR-2026-000101',
-    userId: 'guest_user',
-    user_id: 'guest_user',
-    assessmentYear: 'AY_2026_27',
-    taxpayerType: 'individual',
-    recommendedITRForm: 'ITR-1 (Sahaj)',
-    applicationStatus: 'submitted',
-    status: 'submitted',
-    amountPaid: 3000,
-    amount_paid: 3000,
-    profile: {
-      fullName: 'Rahul Sharma',
-      pan: 'ABCDE1234F',
-      mobile: '9876543210',
-      email: 'rahul@example.com',
-      isPANVerified: true,
-    },
-    taxComputation: {
-      grossTotalIncome: 850000,
-      totalDeductions: 75000,
-      taxableIncome: 775000,
-      totalTaxLiability: 28600,
-      totalTaxesPaid: 35000,
-      isRefund: true,
-      finalAmount: 6400,
-      activeRegime: 'new',
-    },
-    created_at: new Date().toISOString(),
-    submittedAt: new Date().toISOString(),
-  },
-];
-
 export async function submitITRApplication(appData) {
   const appId = `ITR-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
-  const record = {
-    id: appId,
-    applicationId: appId,
+  const insertPayload = {
     application_id: appId,
-    userId: appData.userId || 'guest_user',
-    user_id: appData.userId || 'guest_user',
-    applicationStatus: 'submitted',
+    user_id: appData.userId || appData.user_id || 'guest_user',
     status: 'submitted',
-    ...appData,
-    created_at: new Date().toISOString(),
+    assessment_year: appData.assessmentYear || appData.assessment_year || 'AY_2026_27',
+    taxpayer_type: appData.taxpayerType || appData.taxpayer_type || 'individual',
+    residential_status: appData.residentialStatus || appData.residential_status || 'resident',
+    recommended_itr_form: appData.recommendedItrForm || appData.recommended_itr_form || 'ITR-1',
+    selected_regime: appData.selectedRegime || appData.selected_regime || 'new',
+    profile: appData.profile || {},
+    income_sources: appData.incomeSources || appData.income_sources || {},
+    income_details: appData.incomeDetails || appData.income_details || {},
+    deductions: appData.deductions || {},
+    tax_paid: appData.taxPaid || appData.tax_paid || {},
+    bank_details: appData.bankDetails || appData.bank_details || {},
+    documents: appData.documents || {},
+    tax_computation: appData.taxComputation || appData.tax_computation || {},
+    calculated_fees: appData.calculatedFees || appData.calculated_fees || {},
+    amount_paid: Number(appData.amountPaid || appData.amount_paid || 3000),
+    payment_status: appData.paymentStatus || appData.payment_status || 'successful',
   };
 
   try {
     const { data, error } = await supabase
       .from('itr_applications')
-      .insert(record)
+      .insert(insertPayload)
       .select()
       .single();
 
-    if (error) throw error;
-    _mockITRApplications.unshift(record);
-    return data || record;
+    if (error) {
+      console.error('Supabase insert failed:', error.message);
+      throw error;
+    }
+
+    if (appData.userId && appData.userId !== 'guest_user') {
+      try {
+        await supabase.from('notifications').insert({
+          user_id: appData.userId,
+          title: 'ITR Filing Submitted',
+          description: `Your Income Tax Return filing application (${appId}) has been successfully submitted.`,
+          type: 'info',
+          read: false,
+        });
+      } catch (notifErr) {
+        console.warn('Notification insert warning:', notifErr.message);
+      }
+    }
+
+    return data;
   } catch (err) {
-    _mockITRApplications.unshift(record);
-    return record;
+    console.error('Supabase insert failed:', err.message);
+    throw err;
   }
 }
 
@@ -1441,13 +1187,14 @@ export async function getITRApplications(userId = null) {
     }
 
     const { data, error } = await query;
-    if (error) throw error;
-    return data || _mockITRApplications;
-  } catch (err) {
-    if (userId) {
-      return _mockITRApplications.filter((a) => a.userId === userId || a.user_id === userId);
+    if (error) {
+      console.error('Supabase getITRApplications failed:', error.message);
+      throw error;
     }
-    return _mockITRApplications;
+    return data || [];
+  } catch (err) {
+    console.error('getITRApplications error:', err.message);
+    throw err;
   }
 }
 
@@ -1457,117 +1204,94 @@ export async function getITRApplicationById(applicationId) {
       .from('itr_applications')
       .select('*')
       .eq('application_id', applicationId)
-      .single();
+      .maybeSingle();
 
-    if (error) throw error;
-    return data || _mockITRApplications.find((a) => a.id === applicationId || a.applicationId === applicationId);
+    if (error) {
+      console.error('Supabase getITRApplicationById failed:', error.message);
+      throw error;
+    }
+    return data || null;
   } catch (err) {
-    return _mockITRApplications.find((a) => a.id === applicationId || a.applicationId === applicationId) || null;
+    console.error('getITRApplicationById error:', err.message);
+    throw err;
   }
 }
 
 export async function updateITRApplicationStatus(applicationId, updates = {}) {
   try {
-    await supabase
+    const { data, error } = await supabase
       .from('itr_applications')
       .update({
         ...updates,
         updated_at: new Date().toISOString(),
       })
-      .eq('application_id', applicationId);
-  } catch (err) {}
+      .eq('application_id', applicationId)
+      .select();
 
-  _mockITRApplications = _mockITRApplications.map((a) => {
-    if (a.id === applicationId || a.applicationId === applicationId || a.application_id === applicationId) {
-      return { ...a, ...updates };
-    }
-    return a;
-  });
-
-  return { success: true };
+    if (error) throw error;
+    return { success: true, data };
+  } catch (err) {
+    console.error('updateITRApplicationStatus error:', err.message);
+    throw err;
+  }
 }
 
 /* ========================================================================= */
 /* Import Export Code (IEC) Registration Applications (DGFT)                */
 /* ========================================================================= */
 
-let _mockIECApplications = [
-  {
-    id: 'IEC-2026-000101',
-    applicationId: 'IEC-2026-000101',
-    application_id: 'IEC-2026-000101',
-    userId: 'guest_user',
-    user_id: 'guest_user',
-    entityType: 'proprietorship',
-    applicationStatus: 'submitted',
-    status: 'submitted',
-    amountPaid: 4500,
-    amount_paid: 4500,
-    iecNumber: 'ABCDE1234F',
-    panDetails: {
-      panNumber: 'ABCDE1234F',
-      legalName: 'Acme Global Exports',
-      tradeName: 'Acme International',
-      incorporationDate: '2024-01-15',
-      isPANVerified: true,
-    },
-    businessDetails: {
-      businessName: 'Acme Global Exports',
-      natureOfBusiness: 'Merchant Exporter',
-      businessActivities: ['trader_importer', 'trader_exporter'],
-    },
-    addressDetails: {
-      line1: 'Shop 12, Main Commercial Complex',
-      city: 'New Delhi',
-      state: '07',
-      pinCode: '110020',
-      premisesType: 'owned',
-    },
-    bankDetails: {
-      bankName: 'State Bank of India',
-      accountHolderName: 'Acme Global Exports',
-      accountNumber: '50200012345678',
-      ifsc: 'SBIN0001234',
-      verificationStatus: 'verified',
-    },
-    signatoryDetails: {
-      fullName: 'Rahul Sharma',
-      pan: 'ABCDE1234F',
-      designation: 'proprietor',
-      authMethod: 'aadhaar_otp',
-    },
-    created_at: new Date().toISOString(),
-    submittedAt: new Date().toISOString(),
-  },
-];
-
 export async function submitIECApplication(appData) {
   const appId = `IEC-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
-  const record = {
-    id: appId,
-    applicationId: appId,
+  const insertPayload = {
     application_id: appId,
-    userId: appData.userId || 'guest_user',
-    user_id: appData.userId || 'guest_user',
-    applicationStatus: 'submitted',
+    user_id: appData.userId || appData.user_id || 'guest_user',
     status: 'submitted',
-    ...appData,
-    created_at: new Date().toISOString(),
+    entity_type: appData.entityType || appData.entity_type || 'proprietorship',
+    pan_details: appData.panDetails || appData.pan_details || {},
+    business_details: appData.businessDetails || appData.business_details || {},
+    trade_details: appData.tradeDetails || appData.trade_details || {},
+    address_details: appData.addressDetails || appData.address_details || {},
+    bank_details: appData.bankDetails || appData.bank_details || {},
+    signatory_details: appData.signatoryDetails || appData.signatory_details || {},
+    products: appData.products || [],
+    countries: appData.countries || [],
+    documents: appData.documents || {},
+    declarations: appData.declarations || {},
+    calculated_fees: appData.calculatedFees || appData.calculated_fees || {},
+    amount_paid: Number(appData.amountPaid || appData.amount_paid || 4500),
+    payment_status: appData.paymentStatus || appData.payment_status || 'successful',
   };
 
   try {
     const { data, error } = await supabase
       .from('iec_applications')
-      .insert(record)
+      .insert(insertPayload)
       .select()
       .single();
 
-    if (error) throw error;
-    _mockIECApplications.unshift(record);
-    return data || record;
+    if (error) {
+      console.error('Supabase insert failed:', error.message);
+      throw error;
+    }
+
+    if (appData.userId && appData.userId !== 'guest_user') {
+      try {
+        await supabase.from('notifications').insert({
+          user_id: appData.userId,
+          title: 'IEC Application Submitted',
+          description: `Your Import Export Code application (${appId}) has been successfully submitted to DGFT.`,
+          type: 'info',
+          read: false,
+        });
+      } catch (notifErr) {
+        console.warn('Notification insert warning:', notifErr.message);
+      }
+    }
+
+    return data;
   } catch (err) {
-    _mockIECApplications.unshift(record);
-    return record;
+    console.error('Supabase insert failed:', err.message);
+    throw err;
   }
 }
 
@@ -1583,13 +1307,14 @@ export async function getIECApplications(userId = null) {
     }
 
     const { data, error } = await query;
-    if (error) throw error;
-    return data || _mockIECApplications;
-  } catch (err) {
-    if (userId) {
-      return _mockIECApplications.filter((a) => a.userId === userId || a.user_id === userId);
+    if (error) {
+      console.error('Supabase getIECApplications failed:', error.message);
+      throw error;
     }
-    return _mockIECApplications;
+    return data || [];
+  } catch (err) {
+    console.error('getIECApplications error:', err.message);
+    throw err;
   }
 }
 
@@ -1599,110 +1324,95 @@ export async function getIECApplicationById(applicationId) {
       .from('iec_applications')
       .select('*')
       .eq('application_id', applicationId)
-      .single();
+      .maybeSingle();
 
-    if (error) throw error;
-    return data || _mockIECApplications.find((a) => a.id === applicationId || a.applicationId === applicationId);
+    if (error) {
+      console.error('Supabase getIECApplicationById failed:', error.message);
+      throw error;
+    }
+    return data || null;
   } catch (err) {
-    return _mockIECApplications.find((a) => a.id === applicationId || a.applicationId === applicationId) || null;
+    console.error('getIECApplicationById error:', err.message);
+    throw err;
   }
 }
 
 export async function updateIECApplicationStatus(applicationId, updates = {}) {
   try {
-    await supabase
+    const { data, error } = await supabase
       .from('iec_applications')
       .update({
         ...updates,
         updated_at: new Date().toISOString(),
       })
-      .eq('application_id', applicationId);
-  } catch (err) {}
+      .eq('application_id', applicationId)
+      .select();
 
-  _mockIECApplications = _mockIECApplications.map((a) => {
-    if (a.id === applicationId || a.applicationId === applicationId || a.application_id === applicationId) {
-      return { ...a, ...updates };
-    }
-    return a;
-  });
-
-  return { success: true };
+    if (error) throw error;
+    return { success: true, data };
+  } catch (err) {
+    console.error('updateIECApplicationStatus error:', err.message);
+    throw err;
+  }
 }
 
 /* ========================================================================= */
 /* Other Services Consultation & Requirement Requests                        */
 /* ========================================================================= */
 
-let _mockOtherRequests = [
-  {
-    id: 'OTHER-2026-000101',
-    applicationId: 'OTHER-2026-000101',
-    application_id: 'OTHER-2026-000101',
-    userId: 'guest_user',
-    user_id: 'guest_user',
-    status: 'submitted',
-    applicationStatus: 'submitted',
-    applicantName: 'Vikram Mehta',
-    applicantMobile: '9876543210',
-    applicantEmail: 'vikram@example.com',
-    selectedService: {
-      id: 'gst_notice_reply',
-      name: 'GST Notice Reply',
-      categoryId: 'gst',
-      categoryName: 'GST Services',
-    },
-    applicantDetails: {
-      fullName: 'Vikram Mehta',
-      mobile: '9876543210',
-      email: 'vikram@example.com',
-      applicantType: 'proprietorship',
-    },
-    requirementDetails: {
-      description: 'Received DRC-01 notice regarding ITC mismatch for FY 2023-24. Need legal reply preparation.',
-      department: 'gst',
-      urgency: 'within_7_days',
-      noticeNumber: 'ZA0708240012345',
-    },
-    customQuote: {
-      serviceFee: 2500,
-      governmentFee: 0,
-      gst: 0,
-      total: 2500,
-    },
-    amountPaid: 2500,
-    paymentStatus: 'successful',
-    created_at: new Date().toISOString(),
-    submittedAt: new Date().toISOString(),
-  },
-];
-
 export async function submitOtherServiceRequest(requestData) {
   const appId = `OTHER-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
-  const record = {
-    id: appId,
-    applicationId: appId,
+  const insertPayload = {
     application_id: appId,
-    userId: requestData.userId || 'guest_user',
-    user_id: requestData.userId || 'guest_user',
+    user_id: requestData.userId || requestData.user_id || 'guest_user',
     status: 'submitted',
-    applicationStatus: 'submitted',
-    ...requestData,
-    created_at: new Date().toISOString(),
+    selected_service: requestData.selectedService || requestData.selected_service || {},
+    is_uncertain_service: Boolean(requestData.isUncertainService || requestData.is_uncertain_service),
+    applicant_details: requestData.applicantDetails || requestData.applicant_details || {},
+    applicant_type: requestData.applicantType || requestData.applicant_type || 'individual',
+    requirement_details: requestData.requirementDetails || requestData.requirement_details || {},
+    department: requestData.department || 'gst',
+    urgency: requestData.urgency || 'normal',
+    deadline_date: requestData.deadlineDate || requestData.deadline_date || null,
+    business_details: requestData.businessDetails || requestData.business_details || {},
+    documents: requestData.documents || {},
+    additional_info: requestData.additionalInfo || requestData.additional_info || {},
+    custom_quote: requestData.customQuote || requestData.custom_quote || null,
+    calculated_fees: requestData.calculatedFees || requestData.calculated_fees || {},
+    amount_paid: Number(requestData.amountPaid || requestData.amount_paid || 0),
+    payment_status: requestData.paymentStatus || requestData.payment_status || 'pending',
   };
 
   try {
     const { data, error } = await supabase
       .from('other_service_requests')
-      .insert(record)
+      .insert(insertPayload)
       .select()
       .single();
 
-    if (error) throw error;
-    _mockOtherRequests.unshift(record);
-    return data || record;
+    if (error) {
+      console.error('Supabase insert failed:', error.message);
+      throw error;
+    }
+
+    if (requestData.userId && requestData.userId !== 'guest_user') {
+      try {
+        await supabase.from('notifications').insert({
+          user_id: requestData.userId,
+          title: 'Consultation Request Submitted',
+          description: `Your consultancy requirement (${appId}) has been received and assigned for review.`,
+          type: 'info',
+          read: false,
+        });
+      } catch (notifErr) {
+        console.warn('Notification insert warning:', notifErr.message);
+      }
+    }
+
+    return data;
   } catch (err) {
-    _mockOtherRequests.unshift(record);
-    return record;
+    console.error('Supabase insert failed:', err.message);
+    throw err;
   }
 }
 
@@ -1718,13 +1428,14 @@ export async function getOtherServiceRequests(userId = null) {
     }
 
     const { data, error } = await query;
-    if (error) throw error;
-    return data || _mockOtherRequests;
-  } catch (err) {
-    if (userId) {
-      return _mockOtherRequests.filter((a) => a.userId === userId || a.user_id === userId);
+    if (error) {
+      console.error('Supabase getOtherServiceRequests failed:', error.message);
+      throw error;
     }
-    return _mockOtherRequests;
+    return data || [];
+  } catch (err) {
+    console.error('getOtherServiceRequests error:', err.message);
+    throw err;
   }
 }
 
@@ -1734,34 +1445,36 @@ export async function getOtherServiceRequestById(applicationId) {
       .from('other_service_requests')
       .select('*')
       .eq('application_id', applicationId)
-      .single();
+      .maybeSingle();
 
-    if (error) throw error;
-    return data || _mockOtherRequests.find((a) => a.id === applicationId || a.applicationId === applicationId);
+    if (error) {
+      console.error('Supabase getOtherServiceRequestById failed:', error.message);
+      throw error;
+    }
+    return data || null;
   } catch (err) {
-    return _mockOtherRequests.find((a) => a.id === applicationId || a.applicationId === applicationId) || null;
+    console.error('getOtherServiceRequestById error:', err.message);
+    throw err;
   }
 }
 
 export async function updateOtherServiceRequestStatus(applicationId, updates = {}) {
   try {
-    await supabase
+    const { data, error } = await supabase
       .from('other_service_requests')
       .update({
         ...updates,
         updated_at: new Date().toISOString(),
       })
-      .eq('application_id', applicationId);
-  } catch (err) {}
+      .eq('application_id', applicationId)
+      .select();
 
-  _mockOtherRequests = _mockOtherRequests.map((a) => {
-    if (a.id === applicationId || a.applicationId === applicationId || a.application_id === applicationId) {
-      return { ...a, ...updates };
-    }
-    return a;
-  });
-
-  return { success: true };
+    if (error) throw error;
+    return { success: true, data };
+  } catch (err) {
+    console.error('updateOtherServiceRequestStatus error:', err.message);
+    throw err;
+  }
 }
 
 
