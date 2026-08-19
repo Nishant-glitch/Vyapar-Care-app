@@ -6,6 +6,7 @@ import { getITRApplicationById, updateITRStatus } from '@/lib/adminDatabase';
 import { formatDate, safeRender } from '@/lib/utils';
 import StatusBadge from '@/components/StatusBadge';
 import DocumentViewer from '@/components/DocumentViewer';
+import ApplicationPrintView from '@/components/ApplicationPrintView';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 
 export default function ITRDetailPage({ params }) {
@@ -15,6 +16,8 @@ export default function ITRDetailPage({ params }) {
   const [app, setApp] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedDoc, setSelectedDoc] = useState(null);
+  const [showFullApp, setShowFullApp] = useState(false);
+  const [autoPrintApp, setAutoPrintApp] = useState(false);
   const [status, setStatus] = useState('');
   const [ackNumber, setAckNumber] = useState('');
   const [updating, setUpdating] = useState(false);
@@ -61,10 +64,20 @@ export default function ITRDetailPage({ params }) {
     );
   }
 
+  const rawDocs = app.documents || {};
+  const docList = Array.isArray(rawDocs)
+    ? rawDocs
+    : Object.entries(rawDocs).map(([key, val]) => ({
+        label: key.replace(/_/g, ' '),
+        name: typeof val === 'object' ? val.name || key : key,
+        file_url: typeof val === 'object' ? val.file_url || val.url : val,
+        status: typeof val === 'object' ? val.status || 'pending' : 'pending',
+      }));
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard/itr"
@@ -83,6 +96,28 @@ export default function ITRDetailPage({ params }) {
               ITR Return • {safeRender(app.assessment_year, 'AY 2026-27')} • Submitted {formatDate(app.created_at)}
             </p>
           </div>
+        </div>
+
+        {/* Full Application Action Buttons */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <button
+            onClick={() => {
+              setShowFullApp(true);
+              setAutoPrintApp(false);
+            }}
+            className="px-3.5 py-2 bg-[#1B2B5E] hover:bg-[#283E80] text-white text-xs font-bold rounded-lg transition-all shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            👁️ View Full Application
+          </button>
+          <button
+            onClick={() => {
+              setShowFullApp(true);
+              setAutoPrintApp(true);
+            }}
+            className="px-3.5 py-2 bg-[#C5991A] hover:bg-[#DFB53B] text-slate-950 text-xs font-bold rounded-lg transition-all shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            🖨️ Print Application
+          </button>
         </div>
       </div>
 
@@ -236,6 +271,45 @@ export default function ITRDetailPage({ params }) {
             </div>
           </div>
 
+          {/* Documents Checklist */}
+          <div className="admin-card">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <span>📁</span> ITR Supporting Documents ({docList.length})
+            </h3>
+            {docList.length > 0 ? (
+              <div className="space-y-3">
+                {docList.map((doc, idx) => (
+                  <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="font-bold text-slate-900">{safeRender(doc.name || doc.label)}</div>
+                      <StatusBadge status={doc.status || 'uploaded'} />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDoc(doc)}
+                        className="px-2.5 py-1 bg-[#1B2B5E] text-white text-[11px] font-bold rounded hover:bg-[#283E80] transition-colors inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        👁️ View
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDoc(doc)}
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold rounded transition-colors inline-flex items-center gap-1 border border-slate-300 cursor-pointer"
+                      >
+                        🖨️ Print
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-slate-400 py-3 text-center bg-slate-50 rounded-lg border border-slate-100">
+                Standard Form 16 / AIS documentation recorded.
+              </div>
+            )}
+          </div>
+
           {/* Admin Notes */}
           <div className="admin-card">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -247,6 +321,29 @@ export default function ITRDetailPage({ params }) {
           </div>
         </div>
       </div>
+
+      {/* Document Viewer Modal */}
+      {selectedDoc && (
+        <DocumentViewer
+          isOpen={Boolean(selectedDoc)}
+          onClose={() => setSelectedDoc(null)}
+          document={selectedDoc}
+        />
+      )}
+
+      {/* Full Application Print / View Modal */}
+      {showFullApp && (
+        <ApplicationPrintView
+          isOpen={showFullApp}
+          onClose={() => {
+            setShowFullApp(false);
+            setAutoPrintApp(false);
+          }}
+          application={app}
+          serviceType="itr"
+          autoPrint={autoPrintApp}
+        />
+      )}
     </div>
   );
 }

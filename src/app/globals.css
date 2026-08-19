@@ -121,3 +121,38 @@ body {
 .admin-table tr:hover td {
   background-color: #F8FAFC;
 }
+
+/* Print Utilities & Media Styles */
+@media print {
+  body {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    font-size: 10pt;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  aside,
+  header,
+  nav,
+  .no-print {
+    display: none !important;
+  }
+
+  .admin-card {
+    box-shadow: none !important;
+    border: 1px solid #CBD5E1 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .page-break-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .page-break-before {
+    break-before: page;
+    page-break-before: always;
+  }
+}

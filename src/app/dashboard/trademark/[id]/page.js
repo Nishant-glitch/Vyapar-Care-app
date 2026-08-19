@@ -6,6 +6,7 @@ import { getTMApplicationById, updateTMStatus } from '@/lib/adminDatabase';
 import { formatDate, safeRender } from '@/lib/utils';
 import StatusBadge from '@/components/StatusBadge';
 import DocumentViewer from '@/components/DocumentViewer';
+import ApplicationPrintView from '@/components/ApplicationPrintView';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 
 export default function TrademarkDetailPage({ params }) {
@@ -15,6 +16,8 @@ export default function TrademarkDetailPage({ params }) {
   const [app, setApp] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedDoc, setSelectedDoc] = useState(null);
+  const [showFullApp, setShowFullApp] = useState(false);
+  const [autoPrintApp, setAutoPrintApp] = useState(false);
   const [status, setStatus] = useState('');
   const [officialNumber, setOfficialNumber] = useState('');
   const [updating, setUpdating] = useState(false);
@@ -78,7 +81,7 @@ export default function TrademarkDetailPage({ params }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard/trademark"
@@ -97,6 +100,28 @@ export default function TrademarkDetailPage({ params }) {
               Form TM-A Filing • Submitted {formatDate(app.created_at)}
             </p>
           </div>
+        </div>
+
+        {/* Full Application Action Buttons */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <button
+            onClick={() => {
+              setShowFullApp(true);
+              setAutoPrintApp(false);
+            }}
+            className="px-3.5 py-2 bg-[#1B2B5E] hover:bg-[#283E80] text-white text-xs font-bold rounded-lg transition-all shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            👁️ View Full Application
+          </button>
+          <button
+            onClick={() => {
+              setShowFullApp(true);
+              setAutoPrintApp(true);
+            }}
+            className="px-3.5 py-2 bg-[#C5991A] hover:bg-[#DFB53B] text-slate-950 text-xs font-bold rounded-lg transition-all shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            🖨️ Print Application
+          </button>
         </div>
       </div>
 
@@ -251,14 +276,22 @@ export default function TrademarkDetailPage({ params }) {
                 <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="font-bold text-slate-900">{safeRender(doc.name || doc.label)}</div>
-                    <StatusBadge status={doc.status} />
+                    <StatusBadge status={doc.status || 'uploaded'} />
                   </div>
                   <div className="flex justify-end gap-2 pt-1">
                     <button
+                      type="button"
                       onClick={() => setSelectedDoc(doc)}
-                      className="px-2.5 py-1 bg-[#1B2B5E] text-white text-[11px] font-bold rounded hover:bg-[#283E80] transition-colors"
+                      className="px-2.5 py-1 bg-[#1B2B5E] text-white text-[11px] font-bold rounded hover:bg-[#283E80] transition-colors inline-flex items-center gap-1 cursor-pointer"
                     >
-                      👁️ View Proof
+                      👁️ View
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDoc(doc)}
+                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold rounded transition-colors inline-flex items-center gap-1 border border-slate-300 cursor-pointer"
+                    >
+                      🖨️ Print
                     </button>
                   </div>
                 </div>
@@ -279,20 +312,35 @@ export default function TrademarkDetailPage({ params }) {
       </div>
 
       {/* Document Viewer Modal */}
-      <DocumentViewer
-        isOpen={Boolean(selectedDoc)}
-        onClose={() => setSelectedDoc(null)}
-        document={selectedDoc}
-        onUpdateStatus={(docName, newDocStatus, remarks) => {
-          setApp((prev) => ({
-            ...prev,
-            documents: docList.map((d) =>
-              d.name === docName || d.label === docName ? { ...d, status: newDocStatus, remarks } : d
-            ),
-          }));
-        }}
-      />
+      {selectedDoc && (
+        <DocumentViewer
+          isOpen={Boolean(selectedDoc)}
+          onClose={() => setSelectedDoc(null)}
+          document={selectedDoc}
+          onUpdateStatus={(docName, newDocStatus, remarks) => {
+            setApp((prev) => ({
+              ...prev,
+              documents: docList.map((d) =>
+                d.name === docName || d.label === docName ? { ...d, status: newDocStatus, remarks } : d
+              ),
+            }));
+          }}
+        />
+      )}
+
+      {/* Full Application Print / View Modal */}
+      {showFullApp && (
+        <ApplicationPrintView
+          isOpen={showFullApp}
+          onClose={() => {
+            setShowFullApp(false);
+            setAutoPrintApp(false);
+          }}
+          application={app}
+          serviceType="trademark"
+          autoPrint={autoPrintApp}
+        />
+      )}
     </div>
   );
 }
-
