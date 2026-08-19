@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import DataTable from '@/components/DataTable';
 import StatusBadge from '@/components/StatusBadge';
 import { getAllOtherServiceRequests } from '@/lib/adminDatabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, safeRender } from '@/lib/utils';
 
 export default function OtherServicesPage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function OtherServicesPage() {
       key: 'application_id',
       label: 'Request ID',
       render: (val, row) => (
-        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{val || row.id}</span>
+        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{safeRender(val || row.id)}</span>
       ),
     },
     {
@@ -47,29 +47,29 @@ export default function OtherServicesPage() {
       label: 'Consultancy Service',
       render: (val, row) => (
         <div>
-          <div className="font-semibold text-slate-900">{val || row.selected_service?.title || 'Custom Requirement'}</div>
-          <div className="text-[11px] text-slate-500">Applicant: {row.applicant_name || row.applicant_details?.fullName}</div>
+          <div className="font-semibold text-slate-900">{safeRender(val || row.selected_service?.title || 'Custom Requirement')}</div>
+          <div className="text-[11px] text-slate-500">Applicant: {safeRender(row.applicant_name || row.applicant_details?.fullName || '—')}</div>
         </div>
       ),
     },
     {
       key: 'department',
       label: 'Department',
-      render: (val) => <span className="text-xs text-slate-700 uppercase font-bold">{val || 'Legal / Tax'}</span>,
+      render: (val) => <span className="text-xs text-slate-700 uppercase font-bold">{safeRender(val, 'Legal / Tax')}</span>,
     },
     {
       key: 'urgency',
       label: 'Urgency',
       render: (val) => (
         <span className={`px-2 py-0.5 rounded text-xs font-bold ${val === 'high' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-700'}`}>
-          {val || 'normal'}
+          {safeRender(val, 'normal')}
         </span>
       ),
     },
     {
       key: 'status',
       label: 'Status',
-      render: (val) => <StatusBadge status={val} />,
+      render: (val) => <StatusBadge status={safeRender(val, 'submitted')} />,
     },
     {
       key: 'created_at',

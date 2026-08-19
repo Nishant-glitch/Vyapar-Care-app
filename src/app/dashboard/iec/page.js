@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import DataTable from '@/components/DataTable';
 import StatusBadge from '@/components/StatusBadge';
 import { getAllIECApplications } from '@/lib/adminDatabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, safeRender } from '@/lib/utils';
 
 export default function IECListPage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function IECListPage() {
       key: 'application_id',
       label: 'Application ID',
       render: (val, row) => (
-        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{val || row.id}</span>
+        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{safeRender(val || row.id)}</span>
       ),
     },
     {
@@ -47,27 +47,27 @@ export default function IECListPage() {
       label: 'Entity / Firm Name',
       render: (val, row) => (
         <div>
-          <div className="font-semibold text-slate-900">{val || row.business_details?.firmName || 'Entity'}</div>
-          <div className="text-[11px] text-slate-500 font-mono">PAN: {row.pan || row.pan_details?.panNumber}</div>
+          <div className="font-semibold text-slate-900">{safeRender(val || row.business_details?.firmName || row.business_details?.businessName || 'Entity')}</div>
+          <div className="text-[11px] text-slate-500 font-mono">PAN: {safeRender(row.pan || row.pan_details?.panNumber || '—')}</div>
         </div>
       ),
     },
     {
       key: 'entity_type',
       label: 'Entity Type',
-      render: (val) => <span className="text-xs text-slate-700 capitalize">{val || 'Proprietorship'}</span>,
+      render: (val) => <span className="text-xs text-slate-700 capitalize">{safeRender(val, 'Proprietorship')}</span>,
     },
     {
       key: 'iec_number',
       label: 'DGFT IEC Code',
       render: (val) => (
-        <span className="font-mono font-bold text-emerald-700 text-xs">{val || 'Pending'}</span>
+        <span className="font-mono font-bold text-emerald-700 text-xs">{safeRender(val, 'Pending')}</span>
       ),
     },
     {
       key: 'status',
       label: 'Status',
-      render: (val) => <StatusBadge status={val} />,
+      render: (val) => <StatusBadge status={safeRender(val, 'submitted')} />,
     },
     {
       key: 'created_at',

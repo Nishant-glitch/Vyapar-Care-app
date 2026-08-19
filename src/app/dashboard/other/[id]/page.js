@@ -3,7 +3,7 @@
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { getOtherServiceById, updateOtherServiceStatus } from '@/lib/adminDatabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, safeRender } from '@/lib/utils';
 import StatusBadge from '@/components/StatusBadge';
 import DocumentViewer from '@/components/DocumentViewer';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
@@ -74,7 +74,7 @@ export default function OtherServiceDetailPage({ params }) {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold text-slate-900 font-mono">
-                {app.application_id || app.id}
+                {safeRender(app.application_id || app.id)}
               </h2>
               <StatusBadge status={app.status} />
             </div>
@@ -97,24 +97,32 @@ export default function OtherServiceDetailPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Service Requested</div>
-                <div className="font-bold text-slate-900 text-sm">{app.service_name || app.selected_service?.title}</div>
+                <div className="font-bold text-slate-900 text-sm">
+                  {safeRender(app.service_name || app.selected_service?.title || 'Custom Requirement')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Applicant / Client</div>
-                <div className="font-bold text-slate-900 text-sm">{app.applicant_name || app.applicant_details?.fullName}</div>
+                <div className="font-bold text-slate-900 text-sm">
+                  {safeRender(app.applicant_name || app.applicant_details?.fullName || app.applicant_details?.name || '—')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Compliance Department</div>
-                <div className="font-semibold text-slate-800 uppercase">{app.department || 'Legal & Tax Consultation'}</div>
+                <div className="font-semibold text-slate-800 uppercase">
+                  {safeRender(app.department, 'Legal & Tax Consultation')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Urgency & Target Deadline</div>
-                <div className="font-bold text-rose-700 uppercase">{app.urgency || 'High'} (Target: {app.requirement_details?.deadline || 'End of Month'})</div>
+                <div className="font-bold text-rose-700 uppercase">
+                  {safeRender(app.urgency, 'High')} (Target: {safeRender(app.requirement_details?.deadline || app.deadline, 'End of Month')})
+                </div>
               </div>
               <div className="sm:col-span-2">
                 <div className="text-slate-400 font-semibold mb-1">Detailed Requirement Description</div>
                 <div className="text-slate-800 bg-slate-50 p-3 rounded-lg border border-slate-100 leading-relaxed font-medium">
-                  {app.requirement_details?.description || 'Require Consent to Establish (CTE) & Consent to Operate (CTO) for organic bakery and beverage production unit in Maharashtra.'}
+                  {safeRender(app.requirement_details?.description || app.description, 'Require specialized regulatory assistance and documentation.')}
                 </div>
               </div>
             </div>
@@ -175,7 +183,7 @@ export default function OtherServiceDetailPage({ params }) {
               <span>📝</span> Staff Notes
             </h3>
             <div className="text-xs text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-200">
-              {app.admin_notes || 'Assigned to senior environmental compliance consultant. Site inspection documentation requested from client.'}
+              {safeRender(app.admin_notes, 'Assigned to senior environmental compliance consultant. Site inspection documentation requested from client.')}
             </div>
           </div>
         </div>
@@ -183,3 +191,4 @@ export default function OtherServiceDetailPage({ params }) {
     </div>
   );
 }
+

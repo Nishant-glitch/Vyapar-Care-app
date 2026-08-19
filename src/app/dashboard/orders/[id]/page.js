@@ -4,7 +4,7 @@ import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getOrderById, updateOrderStatus, addOrderNote, sendNotification } from '@/lib/adminDatabase';
-import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils';
+import { formatCurrency, formatDate, formatRelativeTime, safeRender } from '@/lib/utils';
 import StatusBadge from '@/components/StatusBadge';
 import DocumentViewer from '@/components/DocumentViewer';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
@@ -150,7 +150,7 @@ export default function OrderDetailPage({ params }) {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold text-slate-900 font-mono">
-                Order #{order.order_id || order.id}
+                Order #{safeRender(order.order_id || order.id)}
               </h2>
               <StatusBadge status={order.status} />
             </div>
@@ -173,19 +173,19 @@ export default function OrderDetailPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Customer Name</div>
-                <div className="font-bold text-slate-800 text-sm">{order.user_name}</div>
+                <div className="font-bold text-slate-800 text-sm">{safeRender(order.user_name || order.applicant_name || '—')}</div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Customer ID</div>
-                <div className="font-mono font-bold text-[#1B2B5E] text-sm">{order.customer_id}</div>
+                <div className="font-mono font-bold text-[#1B2B5E] text-sm">{safeRender(order.customer_id || order.user_id || '—')}</div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Phone Number</div>
-                <div className="font-semibold text-slate-800">{order.user_phone}</div>
+                <div className="font-semibold text-slate-800">{safeRender(order.user_phone || order.phone || '—')}</div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Email Address</div>
-                <div className="font-semibold text-slate-800">{order.user_email}</div>
+                <div className="font-semibold text-slate-800">{safeRender(order.user_email || order.email || '—')}</div>
               </div>
             </div>
           </div>
@@ -198,7 +198,7 @@ export default function OrderDetailPage({ params }) {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100 mb-4">
               <div>
                 <div className="text-[11px] text-slate-500 font-semibold">Service</div>
-                <div className="font-bold text-slate-900 text-xs mt-0.5">{order.service_name}</div>
+                <div className="font-bold text-slate-900 text-xs mt-0.5">{safeRender(order.service_name || order.service_type || 'Service')}</div>
               </div>
               <div>
                 <div className="text-[11px] text-slate-500 font-semibold">Total Fee</div>
@@ -220,7 +220,7 @@ export default function OrderDetailPage({ params }) {
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
               <span>💳</span> Payment History
             </h3>
-            {order.payments && order.payments.length > 0 ? (
+            {Array.isArray(order.payments) && order.payments.length > 0 ? (
               <div className="overflow-x-auto border border-slate-100 rounded-lg">
                 <table className="admin-table text-xs">
                   <thead>
@@ -237,9 +237,9 @@ export default function OrderDetailPage({ params }) {
                     {order.payments.map((pay) => (
                       <tr key={pay.id || pay.transaction_id}>
                         <td>{formatDate(pay.created_at)}</td>
-                        <td className="capitalize font-semibold">{pay.type}</td>
-                        <td>{pay.method || 'Online'}</td>
-                        <td className="font-mono text-slate-500">{pay.transaction_id}</td>
+                        <td className="capitalize font-semibold">{safeRender(pay.type)}</td>
+                        <td>{safeRender(pay.method, 'Online')}</td>
+                        <td className="font-mono text-slate-500">{safeRender(pay.transaction_id)}</td>
                         <td className="font-bold text-slate-900">{formatCurrency(pay.amount)}</td>
                         <td><StatusBadge status={pay.status} /></td>
                       </tr>
@@ -258,12 +258,12 @@ export default function OrderDetailPage({ params }) {
               <span>⏱️</span> Order Progression Timeline
             </h3>
             <div className="space-y-4 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
-              {(order.timeline || []).map((step, idx) => (
+              {(Array.isArray(order.timeline) ? order.timeline : []).map((step, idx) => (
                 <div key={idx} className="flex items-start gap-4 relative pl-8">
                   <div className="absolute left-1.5 top-1.5 w-3.5 h-3.5 rounded-full bg-[#1B2B5E] border-2 border-white shadow-sm" />
                   <div>
-                    <div className="text-xs font-bold text-slate-800">{step.status}</div>
-                    {step.note && <div className="text-xs text-slate-500 mt-0.5">{step.note}</div>}
+                    <div className="text-xs font-bold text-slate-800">{safeRender(step.status)}</div>
+                    {step.note && <div className="text-xs text-slate-500 mt-0.5">{safeRender(step.note)}</div>}
                     <div className="text-[10px] text-slate-400 mt-1">{formatRelativeTime(step.timestamp)} • {formatDate(step.timestamp, 'dd MMM yyyy, hh:mm a')}</div>
                   </div>
                 </div>

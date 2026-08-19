@@ -3,7 +3,7 @@
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { getIECApplicationById, updateIECStatus } from '@/lib/adminDatabase';
-import { maskPAN, formatDate } from '@/lib/utils';
+import { maskPAN, formatDate, safeRender } from '@/lib/utils';
 import StatusBadge from '@/components/StatusBadge';
 import DocumentViewer from '@/components/DocumentViewer';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
@@ -61,6 +61,14 @@ export default function IECDetailPage({ params }) {
     );
   }
 
+  const productsList = Array.isArray(app.products)
+    ? app.products
+    : ['Silk Fabrics (HSN 5007)', 'Cotton Madeups (HSN 6304)'];
+
+  const countriesList = Array.isArray(app.countries)
+    ? app.countries
+    : ['United States', 'United Kingdom', 'UAE', 'Australia'];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -75,7 +83,7 @@ export default function IECDetailPage({ params }) {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold text-slate-900 font-mono">
-                {app.application_id || app.id}
+                {safeRender(app.application_id || app.id)}
               </h2>
               <StatusBadge status={app.status} />
             </div>
@@ -98,19 +106,27 @@ export default function IECDetailPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Firm / Entity Name</div>
-                <div className="font-bold text-slate-900 text-sm">{app.business_details?.firmName || app.applicant_name}</div>
+                <div className="font-bold text-slate-900 text-sm">
+                  {safeRender(app.business_details?.firmName || app.business_details?.businessName || app.applicant_name || '—')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Entity Constitution</div>
-                <div className="font-semibold text-slate-800 capitalize">{app.entity_type || 'Partnership'}</div>
+                <div className="font-semibold text-slate-800 capitalize">
+                  {safeRender(app.entity_type || app.constitution || 'Partnership')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">PAN Number</div>
-                <div className="font-mono font-bold text-slate-900">{maskPAN(app.pan || app.pan_details?.panNumber)}</div>
+                <div className="font-mono font-bold text-slate-900">
+                  {maskPAN(typeof app.pan === 'string' ? app.pan : (app.pan_details?.panNumber || ''))}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Activity Nature</div>
-                <div className="font-medium text-slate-800">{app.business_details?.activity || 'Merchant & Manufacturer Exporter'}</div>
+                <div className="font-medium text-slate-800">
+                  {safeRender(app.business_details?.activity || app.nature_of_business || 'Merchant & Manufacturer Exporter')}
+                </div>
               </div>
             </div>
           </div>
@@ -124,9 +140,9 @@ export default function IECDetailPage({ params }) {
               <div>
                 <div className="font-semibold text-slate-700 mb-1.5">Intended Export / Import Products (HSN)</div>
                 <div className="flex flex-wrap gap-2">
-                  {(app.products || ['Silk Fabrics (HSN 5007)', 'Cotton Madeups (HSN 6304)']).map((p, idx) => (
+                  {productsList.map((p, idx) => (
                     <span key={idx} className="px-3 py-1 bg-slate-100 rounded-lg text-slate-800 font-medium">
-                      {p}
+                      {safeRender(typeof p === 'object' ? p.name || p.hsn : p)}
                     </span>
                   ))}
                 </div>
@@ -135,9 +151,9 @@ export default function IECDetailPage({ params }) {
               <div>
                 <div className="font-semibold text-slate-700 mb-1.5">Primary Trade Destination Countries</div>
                 <div className="flex flex-wrap gap-2">
-                  {(app.countries || ['United States', 'United Kingdom', 'UAE', 'Australia']).map((c, idx) => (
+                  {countriesList.map((c, idx) => (
                     <span key={idx} className="px-3 py-1 bg-cyan-50 border border-cyan-200 text-cyan-800 rounded-lg font-medium">
-                      ✈️ {c}
+                      ✈️ {safeRender(typeof c === 'object' ? c.name || c.country : c)}
                     </span>
                   ))}
                 </div>
@@ -199,7 +215,7 @@ export default function IECDetailPage({ params }) {
               <span>📝</span> DGFT Portal Notes
             </h3>
             <div className="text-xs text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-200">
-              {app.admin_remarks || 'PFMS bank pre-validation verified successfully with DGFT portal.'}
+              {safeRender(app.admin_remarks || app.admin_notes, 'PFMS bank pre-validation verified successfully with DGFT portal.')}
             </div>
           </div>
         </div>
@@ -207,3 +223,4 @@ export default function IECDetailPage({ params }) {
     </div>
   );
 }
+

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import DataTable from '@/components/DataTable';
 import StatusBadge from '@/components/StatusBadge';
 import { getAllGSTApplications } from '@/lib/adminDatabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, safeRender } from '@/lib/utils';
 
 export default function GSTListPage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function GSTListPage() {
       key: 'application_id',
       label: 'Application ID',
       render: (val, row) => (
-        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{val || row.id}</span>
+        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{safeRender(val || row.id)}</span>
       ),
     },
     {
@@ -47,20 +47,20 @@ export default function GSTListPage() {
       label: 'Applicant',
       render: (val, row) => (
         <div>
-          <div className="font-semibold text-slate-900">{val || 'Applicant'}</div>
-          <div className="text-[11px] text-slate-500">{row.mobile}</div>
+          <div className="font-semibold text-slate-900">{safeRender(val || row.applicant?.fullName || 'Applicant')}</div>
+          <div className="text-[11px] text-slate-500">{safeRender(row.mobile || row.applicant?.mobile || '—')}</div>
         </div>
       ),
     },
     {
       key: 'business_name',
       label: 'Business Name',
-      render: (val) => <span className="font-semibold text-slate-800">{val || '—'}</span>,
+      render: (val, row) => <span className="font-semibold text-slate-800">{safeRender(val || row.business_details?.tradeName || '—')}</span>,
     },
     {
       key: 'constitution',
       label: 'Constitution',
-      render: (val) => <span className="text-xs text-slate-600">{val || 'Proprietorship'}</span>,
+      render: (val, row) => <span className="text-xs text-slate-600">{safeRender(val || row.business_details?.constitution || 'Proprietorship')}</span>,
     },
     {
       key: 'docs_percentage',

@@ -3,7 +3,7 @@
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { getGSTApplicationById, updateGSTStatus, updateGSTDocumentStatus, sendNotification } from '@/lib/adminDatabase';
-import { maskPAN, maskBankAccount, maskAadhaar, formatDate } from '@/lib/utils';
+import { maskPAN, maskBankAccount, maskAadhaar, formatDate, safeRender } from '@/lib/utils';
 import StatusBadge from '@/components/StatusBadge';
 import DocumentViewer from '@/components/DocumentViewer';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
@@ -116,7 +116,7 @@ export default function GSTDetailPage({ params }) {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold text-slate-900 font-mono">
-                {app.application_id || app.id}
+                {safeRender(app.application_id || app.id)}
               </h2>
               <StatusBadge status={app.status} />
             </div>
@@ -139,31 +139,45 @@ export default function GSTDetailPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Full Legal Name</div>
-                <div className="font-bold text-slate-900 text-sm">{app.applicant?.fullName || app.applicant_name}</div>
+                <div className="font-bold text-slate-900 text-sm">
+                  {safeRender(app.applicant?.fullName || app.applicant?.name || app.applicant_name || '—')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Father / Spouse Name</div>
-                <div className="font-medium text-slate-800">{app.applicant?.fatherName || '—'}</div>
+                <div className="font-medium text-slate-800">
+                  {safeRender(app.applicant?.fatherName || app.applicant?.spouseName || '—')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">PAN Number</div>
-                <div className="font-mono font-bold text-slate-800">{maskPAN(app.applicant?.pan)}</div>
+                <div className="font-mono font-bold text-slate-800">
+                  {maskPAN(typeof app.applicant?.pan === 'string' ? app.applicant.pan : (app.pan || ''))}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Aadhaar Number</div>
-                <div className="font-mono font-semibold text-slate-800">{maskAadhaar(app.applicant?.aadhaar)}</div>
+                <div className="font-mono font-semibold text-slate-800">
+                  {maskAadhaar(typeof app.applicant?.aadhaar === 'string' ? app.applicant.aadhaar : (app.aadhaar || ''))}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Mobile Contact</div>
-                <div className="font-semibold text-slate-800">{app.applicant?.mobile || app.mobile}</div>
+                <div className="font-semibold text-slate-800">
+                  {safeRender(app.applicant?.mobile || app.mobile || '—')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Email Address</div>
-                <div className="font-semibold text-slate-800">{app.applicant?.email || app.email}</div>
+                <div className="font-semibold text-slate-800">
+                  {safeRender(app.applicant?.email || app.email || '—')}
+                </div>
               </div>
               <div className="sm:col-span-2">
                 <div className="text-slate-400 font-semibold mb-0.5">Residential Address</div>
-                <div className="text-slate-800">{app.applicant?.residentialAddress || '—'}</div>
+                <div className="text-slate-800">
+                  {safeRender(app.applicant?.residentialAddress || app.applicant?.address || '—')}
+                </div>
               </div>
             </div>
           </div>
@@ -176,29 +190,39 @@ export default function GSTDetailPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Trade Name</div>
-                <div className="font-bold text-slate-900 text-sm">{app.business_details?.tradeName || app.business_name}</div>
+                <div className="font-bold text-slate-900 text-sm">
+                  {safeRender(app.business_details?.tradeName || app.business_details?.businessName || app.business_name || '—')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Legal Name</div>
-                <div className="font-bold text-slate-900 text-sm">{app.business_details?.legalName || '—'}</div>
+                <div className="font-bold text-slate-900 text-sm">
+                  {safeRender(app.business_details?.legalName || app.business_name || '—')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Constitution of Business</div>
-                <div className="font-medium text-slate-800">{app.constitution || app.business_details?.constitution}</div>
+                <div className="font-medium text-slate-800">
+                  {safeRender(app.constitution || app.business_details?.constitution || 'Proprietorship')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Commencement Date</div>
-                <div className="font-medium text-slate-800">{app.business_details?.startDate || '—'}</div>
+                <div className="font-medium text-slate-800">
+                  {safeRender(app.business_details?.startDate || app.business_details?.dateOfCommencement || '—')}
+                </div>
               </div>
               <div className="sm:col-span-2">
                 <div className="text-slate-400 font-semibold mb-0.5">Business Activities / Nature of Goods</div>
-                <div className="font-medium text-slate-800">{app.business_details?.activity || app.business_type}</div>
+                <div className="font-medium text-slate-800">
+                  {safeRender(app.business_details?.activity || app.business_details?.natureOfBusiness || app.business_type || '—')}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Promoters / Partners */}
-          {app.promoters && app.promoters.length > 0 && (
+          {Array.isArray(app.promoters) && app.promoters.length > 0 && (
             <div className="admin-card">
               <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
                 <span>👥</span> Promoters / Partners / Directors ({app.promoters.length})
@@ -207,12 +231,12 @@ export default function GSTDetailPage({ params }) {
                 {app.promoters.map((p, idx) => (
                   <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
                     <div>
-                      <div className="font-bold text-slate-900">{p.name}</div>
-                      <div className="text-slate-500">{p.designation} • Share: {p.share}</div>
+                      <div className="font-bold text-slate-900">{safeRender(p.name || p.fullName)}</div>
+                      <div className="text-slate-500">{safeRender(p.designation)} • Share: {safeRender(p.share || p.percentage || '—')}</div>
                     </div>
                     <div className="text-right font-mono text-slate-600">
-                      <div>PAN: {maskPAN(p.pan)}</div>
-                      <div className="text-[11px] text-slate-400">{p.mobile}</div>
+                      <div>PAN: {maskPAN(typeof p.pan === 'string' ? p.pan : '')}</div>
+                      <div className="text-[11px] text-slate-400">{safeRender(p.mobile)}</div>
                     </div>
                   </div>
                 ))}
@@ -228,15 +252,15 @@ export default function GSTDetailPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Premises Possession Type</div>
-                <div className="font-bold text-slate-800">{app.premises_details?.type || 'Rented / Leased'}</div>
+                <div className="font-bold text-slate-800">{safeRender(app.premises_details?.type || 'Rented / Leased')}</div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Proof of Possession</div>
-                <div className="font-medium text-slate-800">{app.premises_details?.natureOfPossession || 'Electricity Bill'}</div>
+                <div className="font-medium text-slate-800">{safeRender(app.premises_details?.natureOfPossession || 'Electricity Bill')}</div>
               </div>
               <div className="sm:col-span-2">
                 <div className="text-slate-400 font-semibold mb-0.5">Registered Address</div>
-                <div className="font-medium text-slate-800">{app.premises_details?.address || '—'}</div>
+                <div className="font-medium text-slate-800">{safeRender(app.premises_details?.address || app.premises_details?.completeAddress || '—')}</div>
               </div>
             </div>
           </div>
@@ -249,19 +273,23 @@ export default function GSTDetailPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Account Number</div>
-                <div className="font-mono font-bold text-slate-900">{maskBankAccount(app.bank_details?.accountNumber)}</div>
+                <div className="font-mono font-bold text-slate-900">
+                  {maskBankAccount(typeof app.bank_details?.accountNumber === 'string' ? app.bank_details.accountNumber : '')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">IFSC Code</div>
-                <div className="font-mono font-bold text-[#1B2B5E]">{app.bank_details?.ifsc || '—'}</div>
+                <div className="font-mono font-bold text-[#1B2B5E]">{safeRender(app.bank_details?.ifsc || app.bank_details?.ifscCode || '—')}</div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Bank Name & Branch</div>
-                <div className="font-medium text-slate-800">{app.bank_details?.bankName} ({app.bank_details?.branch})</div>
+                <div className="font-medium text-slate-800">
+                  {safeRender(app.bank_details?.bankName || '—')} {app.bank_details?.branch ? `(${safeRender(app.bank_details.branch)})` : ''}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Account Type</div>
-                <div className="font-medium text-slate-800">{app.bank_details?.accountType || 'Current'}</div>
+                <div className="font-medium text-slate-800">{safeRender(app.bank_details?.accountType || 'Current')}</div>
               </div>
             </div>
           </div>

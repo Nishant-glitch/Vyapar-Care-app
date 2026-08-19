@@ -3,7 +3,7 @@
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { getUdyamApplicationById, updateUdyamStatus } from '@/lib/adminDatabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, safeRender } from '@/lib/utils';
 import StatusBadge from '@/components/StatusBadge';
 import DocumentViewer from '@/components/DocumentViewer';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
@@ -60,6 +60,11 @@ export default function UdyamDetailPage({ params }) {
     );
   }
 
+  // Parse classification safely
+  const classificationText = typeof app.msme_classification === 'object'
+    ? app.msme_classification?.categoryLabel || app.msme_classification?.category || 'Micro Enterprise'
+    : (app.msme_classification || 'Micro Enterprise');
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -74,7 +79,7 @@ export default function UdyamDetailPage({ params }) {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold text-slate-900 font-mono">
-                {app.application_id || app.id}
+                {safeRender(app.application_id || app.id)}
               </h2>
               <StatusBadge status={app.status} />
             </div>
@@ -97,22 +102,74 @@ export default function UdyamDetailPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Enterprise Name</div>
-                <div className="font-bold text-slate-900 text-sm">{app.enterprise_name || app.business_details?.enterpriseName}</div>
+                <div className="font-bold text-slate-900 text-sm">
+                  {safeRender(app.enterprise_name || app.business_details?.enterpriseName || app.business_details?.businessName || '—')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Applicant / Entrepreneur</div>
-                <div className="font-bold text-slate-900 text-sm">{app.applicant_name || app.aadhaar_details?.applicantName}</div>
+                <div className="font-bold text-slate-900 text-sm">
+                  {safeRender(app.applicant_name || app.aadhaar_details?.applicantName || app.applicant_details?.fullName || '—')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">MSME Classification</div>
-                <div className="font-bold text-pink-700">{app.msme_classification || 'Micro Enterprise'}</div>
+                <div className="font-bold text-pink-700">
+                  {classificationText}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Major Activity</div>
-                <div className="font-semibold text-slate-800">Trading / Services</div>
+                <div className="font-semibold text-slate-800">
+                  {safeRender(app.business_details?.majorActivity || 'Trading / Services')}
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Detailed JSONB: Business & Aadhaar Info */}
+          {(app.business_details || app.aadhaar_details || app.bank_details) && (
+            <div className="admin-card space-y-4">
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <span>📋</span> Submitted Application Details
+              </h3>
+
+              {app.aadhaar_details && (
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                  <div className="font-bold text-slate-800 mb-2">Aadhaar & Verification</div>
+                  <div className="grid grid-cols-2 gap-2 text-slate-600">
+                    <div><span className="text-slate-400">Name:</span> {safeRender(app.aadhaar_details.applicantName || app.aadhaar_details.name)}</div>
+                    <div><span className="text-slate-400">Aadhaar No:</span> {safeRender(app.aadhaar_details.aadhaarNumber || app.aadhaar_details.aadhaarNo)}</div>
+                    <div><span className="text-slate-400">Gender:</span> {safeRender(app.aadhaar_details.gender)}</div>
+                    <div><span className="text-slate-400">Social Category:</span> {safeRender(app.aadhaar_details.socialCategory)}</div>
+                  </div>
+                </div>
+              )}
+
+              {app.business_details && (
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                  <div className="font-bold text-slate-800 mb-2">Business / Unit Information</div>
+                  <div className="grid grid-cols-2 gap-2 text-slate-600">
+                    <div><span className="text-slate-400">Org Type:</span> {safeRender(app.business_details.organisationType || app.business_details.type)}</div>
+                    <div><span className="text-slate-400">PAN:</span> {safeRender(app.business_details.panNumber || app.business_details.pan)}</div>
+                    <div><span className="text-slate-400">Email:</span> {safeRender(app.business_details.email || app.email)}</div>
+                    <div><span className="text-slate-400">Mobile:</span> {safeRender(app.business_details.mobile || app.mobile)}</div>
+                  </div>
+                </div>
+              )}
+
+              {app.bank_details && (
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                  <div className="font-bold text-slate-800 mb-2">Bank Details</div>
+                  <div className="grid grid-cols-2 gap-2 text-slate-600">
+                    <div><span className="text-slate-400">Bank:</span> {safeRender(app.bank_details.bankName)}</div>
+                    <div><span className="text-slate-400">IFSC:</span> {safeRender(app.bank_details.ifscCode)}</div>
+                    <div><span className="text-slate-400">Account No:</span> {safeRender(app.bank_details.accountNumber)}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* NIC Codes (National Industry Classification) */}
           <div className="admin-card">
@@ -120,13 +177,16 @@ export default function UdyamDetailPage({ params }) {
               <span>🏷️</span> NIC 2008 Activity Codes
             </h3>
             <div className="space-y-2">
-              {(app.nic_codes || [
-                { code: '4630', description: 'Wholesale of food, beverages and tobacco' },
-                { code: '4711', description: 'Retail sale in non-specialized stores' },
-              ]).map((nic, idx) => (
+              {(Array.isArray(app.nic_codes) && app.nic_codes.length > 0
+                ? app.nic_codes
+                : [
+                    { code: '4630', description: 'Wholesale of food, beverages and tobacco' },
+                    { code: '4711', description: 'Retail sale in non-specialized stores' },
+                  ]
+              ).map((nic, idx) => (
                 <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs flex items-center justify-between">
-                  <div className="font-mono font-bold text-[#1B2B5E] text-sm">{nic.code}</div>
-                  <div className="text-slate-700 max-w-md text-right font-medium">{nic.description}</div>
+                  <div className="font-mono font-bold text-[#1B2B5E] text-sm">{safeRender(typeof nic === 'object' ? nic.code : nic)}</div>
+                  <div className="text-slate-700 max-w-md text-right font-medium">{safeRender(typeof nic === 'object' ? nic.description || nic.desc : '')}</div>
                 </div>
               ))}
             </div>
@@ -140,11 +200,15 @@ export default function UdyamDetailPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs">
               <div>
                 <div className="text-slate-500 font-semibold">Investment in Plant & Machinery</div>
-                <div className="font-bold text-slate-900 text-sm mt-0.5">{app.financials?.investmentPlantMachinery || '₹12,00,000'}</div>
+                <div className="font-bold text-slate-900 text-sm mt-0.5">
+                  {safeRender(app.financials?.investmentPlantMachinery || app.financials?.investmentCrores || '₹12,00,000')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-500 font-semibold">Total Annual Turnover</div>
-                <div className="font-bold text-slate-900 text-sm mt-0.5">{app.financials?.turnover || '₹45,00,000'}</div>
+                <div className="font-bold text-slate-900 text-sm mt-0.5">
+                  {safeRender(app.financials?.turnover || app.financials?.turnoverCrores || '₹45,00,000')}
+                </div>
               </div>
             </div>
           </div>
@@ -202,7 +266,7 @@ export default function UdyamDetailPage({ params }) {
               <span>📝</span> National MSME Registry Notes
             </h3>
             <div className="text-xs text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-200">
-              {app.admin_notes || 'Udyam e-certificate successfully generated from Government MSME portal.'}
+              {safeRender(app.admin_notes, 'Udyam e-certificate successfully generated from Government MSME portal.')}
             </div>
           </div>
         </div>
@@ -210,3 +274,4 @@ export default function UdyamDetailPage({ params }) {
     </div>
   );
 }
+

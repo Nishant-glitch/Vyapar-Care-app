@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import DataTable from '@/components/DataTable';
 import StatusBadge from '@/components/StatusBadge';
 import { getAllITRApplications } from '@/lib/adminDatabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, safeRender } from '@/lib/utils';
 
 export default function ITRListPage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function ITRListPage() {
       key: 'application_id',
       label: 'Application ID',
       render: (val, row) => (
-        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{val || row.id}</span>
+        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{safeRender(val || row.id)}</span>
       ),
     },
     {
@@ -47,29 +47,29 @@ export default function ITRListPage() {
       label: 'Taxpayer Name',
       render: (val, row) => (
         <div>
-          <div className="font-semibold text-slate-900">{val || row.profile?.fullName || 'Taxpayer'}</div>
-          <div className="text-[11px] text-slate-500 font-mono">PAN: {row.profile?.pan || 'ABCPS1234K'}</div>
+          <div className="font-semibold text-slate-900">{safeRender(val || row.profile?.fullName || row.profile?.name || 'Taxpayer')}</div>
+          <div className="text-[11px] text-slate-500 font-mono">PAN: {safeRender(row.profile?.pan || row.pan || '—')}</div>
         </div>
       ),
     },
     {
       key: 'assessment_year',
       label: 'Assessment Year',
-      render: (val) => <span className="font-semibold text-amber-700">{val || 'AY 2026-27'}</span>,
+      render: (val) => <span className="font-semibold text-amber-700">{safeRender(val, 'AY 2026-27')}</span>,
     },
     {
       key: 'recommended_itr_form',
       label: 'ITR Form',
       render: (val) => (
         <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-bold">
-          {val || 'ITR-1'}
+          {safeRender(val, 'ITR-1')}
         </span>
       ),
     },
     {
       key: 'status',
       label: 'Status',
-      render: (val) => <StatusBadge status={val} />,
+      render: (val) => <StatusBadge status={safeRender(val, 'submitted')} />,
     },
     {
       key: 'created_at',

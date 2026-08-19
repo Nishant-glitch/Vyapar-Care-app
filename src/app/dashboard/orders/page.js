@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import DataTable from '@/components/DataTable';
 import StatusBadge from '@/components/StatusBadge';
 import { getAllOrders } from '@/lib/adminDatabase';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, safeRender } from '@/lib/utils';
 
 export default function OrdersListPage() {
   const router = useRouter();
@@ -40,7 +40,7 @@ export default function OrdersListPage() {
       key: 'order_id',
       label: 'Order ID',
       render: (val, row) => (
-        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{val || row.id}</span>
+        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{safeRender(val || row.id)}</span>
       ),
     },
     {
@@ -48,15 +48,15 @@ export default function OrdersListPage() {
       label: 'Customer Name',
       render: (val, row) => (
         <div>
-          <div className="font-semibold text-slate-900">{val || 'Customer'}</div>
-          <div className="text-[11px] text-slate-500">{row.user_phone || row.customer_id}</div>
+          <div className="font-semibold text-slate-900">{safeRender(val || row.applicant_name || 'Customer')}</div>
+          <div className="text-[11px] text-slate-500">{safeRender(row.user_phone || row.customer_id || '—')}</div>
         </div>
       ),
     },
     {
       key: 'service_name',
       label: 'Service',
-      render: (val) => <span className="font-medium text-slate-800">{val}</span>,
+      render: (val, row) => <span className="font-medium text-slate-800">{safeRender(val || row.service_type || 'Service')}</span>,
     },
     {
       key: 'fee',

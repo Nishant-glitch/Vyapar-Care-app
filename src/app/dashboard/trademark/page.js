@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import DataTable from '@/components/DataTable';
 import StatusBadge from '@/components/StatusBadge';
 import { getAllTMApplications } from '@/lib/adminDatabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, safeRender } from '@/lib/utils';
 
 export default function TrademarkListPage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function TrademarkListPage() {
       key: 'application_id',
       label: 'Application ID',
       render: (val, row) => (
-        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{val || row.id}</span>
+        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{safeRender(val || row.id)}</span>
       ),
     },
     {
@@ -47,24 +47,24 @@ export default function TrademarkListPage() {
       label: 'Trademark Mark / Brand',
       render: (val, row) => (
         <div>
-          <div className="font-bold text-slate-900">{val || row.mark_details?.trademarkName || 'Brand Mark'}</div>
-          <div className="text-[11px] text-slate-500">Applicant: {row.applicant_name || row.applicant_details?.legalName}</div>
+          <div className="font-bold text-slate-900">{safeRender(val || row.mark_details?.trademarkName || row.mark_details?.wordmark || 'Brand Mark')}</div>
+          <div className="text-[11px] text-slate-500">Applicant: {safeRender(row.applicant_name || row.applicant_details?.legalName || row.applicant_details?.name || '—')}</div>
         </div>
       ),
     },
     {
       key: 'applicant_type',
       label: 'Applicant Type',
-      render: (val) => <span className="text-xs text-slate-700 capitalize">{val || 'Individual'}</span>,
+      render: (val) => <span className="text-xs text-slate-700 capitalize">{safeRender(val, 'Individual')}</span>,
     },
     {
       key: 'selected_classes',
       label: 'Classes',
       render: (val) => (
         <div className="flex flex-wrap gap-1">
-          {(val || [9]).map((cls) => (
+          {(Array.isArray(val) ? val : [val || 9]).map((cls) => (
             <span key={cls} className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">
-              Class {cls}
+              Class {safeRender(cls)}
             </span>
           ))}
         </div>
@@ -73,7 +73,7 @@ export default function TrademarkListPage() {
     {
       key: 'status',
       label: 'Status',
-      render: (val) => <StatusBadge status={val} />,
+      render: (val) => <StatusBadge status={safeRender(val, 'submitted')} />,
     },
     {
       key: 'created_at',

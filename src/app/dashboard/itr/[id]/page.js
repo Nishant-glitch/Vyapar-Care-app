@@ -3,7 +3,7 @@
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { getITRApplicationById, updateITRStatus } from '@/lib/adminDatabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, safeRender } from '@/lib/utils';
 import StatusBadge from '@/components/StatusBadge';
 import DocumentViewer from '@/components/DocumentViewer';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
@@ -14,6 +14,7 @@ export default function ITRDetailPage({ params }) {
 
   const [app, setApp] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedDoc, setSelectedDoc] = useState(null);
   const [status, setStatus] = useState('');
   const [ackNumber, setAckNumber] = useState('');
   const [updating, setUpdating] = useState(false);
@@ -25,7 +26,7 @@ export default function ITRDetailPage({ params }) {
         if (data) {
           setApp(data);
           setStatus(data.status || 'submitted');
-          setAckNumber(data.acknowledgment_number || '');
+          setAckNumber(data.acknowledgement_number || data.ack_number || '');
         }
       } catch (err) {
         console.error('Failed to load ITR details:', err);
@@ -40,7 +41,7 @@ export default function ITRDetailPage({ params }) {
     setUpdating(true);
     try {
       await updateITRStatus(app.id || id, status, ackNumber);
-      setApp((prev) => ({ ...prev, status, acknowledgment_number: ackNumber }));
+      setApp((prev) => ({ ...prev, status, acknowledgement_number: ackNumber }));
     } finally {
       setUpdating(false);
     }
@@ -74,12 +75,12 @@ export default function ITRDetailPage({ params }) {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold text-slate-900 font-mono">
-                {app.application_id || app.id}
+                {safeRender(app.application_id || app.id)}
               </h2>
               <StatusBadge status={app.status} />
             </div>
             <p className="text-xs text-slate-500">
-              ITR Return • {app.assessment_year || 'AY 2026-27'} • Submitted {formatDate(app.created_at)}
+              ITR Return • {safeRender(app.assessment_year, 'AY 2026-27')} • Submitted {formatDate(app.created_at)}
             </p>
           </div>
         </div>
@@ -97,19 +98,27 @@ export default function ITRDetailPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Taxpayer Full Name</div>
-                <div className="font-bold text-slate-900 text-sm">{app.applicant_name || app.profile?.fullName}</div>
+                <div className="font-bold text-slate-900 text-sm">
+                  {safeRender(app.applicant_name || app.profile?.fullName || app.profile?.name || '—')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Recommended ITR Form</div>
-                <div className="font-bold text-amber-700">{app.recommended_itr_form || 'ITR-3 (Business & Profession)'}</div>
+                <div className="font-bold text-amber-700">
+                  {safeRender(app.recommended_itr_form || app.itr_form || 'ITR-3 (Business & Profession)')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Selected Tax Regime</div>
-                <div className="font-semibold text-slate-800">{app.selected_regime || 'New Regime (Section 115BAC)'}</div>
+                <div className="font-semibold text-slate-800">
+                  {safeRender(app.selected_regime || app.tax_regime || 'New Regime (Section 115BAC)')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Residential Status</div>
-                <div className="font-semibold text-slate-800">{app.residential_status || 'Resident Individual'}</div>
+                <div className="font-semibold text-slate-800">
+                  {safeRender(app.residential_status || 'Resident Individual')}
+                </div>
               </div>
             </div>
           </div>
@@ -122,19 +131,27 @@ export default function ITRDetailPage({ params }) {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs">
               <div>
                 <div className="text-slate-500 font-semibold">Business / Profession</div>
-                <div className="font-bold text-slate-900 text-sm mt-0.5">{app.income_sources?.businessIncome || '₹14,50,000'}</div>
+                <div className="font-bold text-slate-900 text-sm mt-0.5">
+                  {safeRender(app.income_sources?.businessIncome || app.income_sources?.business || '₹14,50,000')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-500 font-semibold">Salary Income</div>
-                <div className="font-bold text-slate-900 text-sm mt-0.5">{app.income_sources?.salaryIncome || '₹0'}</div>
+                <div className="font-bold text-slate-900 text-sm mt-0.5">
+                  {safeRender(app.income_sources?.salaryIncome || app.income_sources?.salary || '₹0')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-500 font-semibold">Capital Gains</div>
-                <div className="font-bold text-slate-900 text-sm mt-0.5">{app.income_sources?.capitalGains || '₹85,000'}</div>
+                <div className="font-bold text-slate-900 text-sm mt-0.5">
+                  {safeRender(app.income_sources?.capitalGains || '₹85,000')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-500 font-semibold">Other Sources</div>
-                <div className="font-bold text-slate-900 text-sm mt-0.5">{app.income_sources?.otherSources || '₹42,000'}</div>
+                <div className="font-bold text-slate-900 text-sm mt-0.5">
+                  {safeRender(app.income_sources?.otherSources || '₹42,000')}
+                </div>
               </div>
             </div>
           </div>
@@ -147,19 +164,27 @@ export default function ITRDetailPage({ params }) {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs">
               <div>
                 <div className="text-slate-500 font-semibold">Gross Total Income</div>
-                <div className="font-bold text-slate-900 text-sm mt-0.5">{app.tax_computation?.grossTotalIncome || '₹15,77,000'}</div>
+                <div className="font-bold text-slate-900 text-sm mt-0.5">
+                  {safeRender(app.tax_computation?.grossTotalIncome || app.tax_computation?.totalIncome || '₹15,77,000')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-500 font-semibold">Total Tax Payable</div>
-                <div className="font-bold text-slate-900 text-sm mt-0.5">{app.tax_computation?.totalTaxPayable || '₹1,68,200'}</div>
+                <div className="font-bold text-slate-900 text-sm mt-0.5">
+                  {safeRender(app.tax_computation?.totalTaxPayable || app.tax_computation?.taxPayable || '₹1,68,200')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-500 font-semibold">TDS / Advance Tax Paid</div>
-                <div className="font-bold text-slate-900 text-sm mt-0.5">{app.tax_computation?.advanceTdsPaid || '₹1,75,000'}</div>
+                <div className="font-bold text-slate-900 text-sm mt-0.5">
+                  {safeRender(app.tax_computation?.advanceTdsPaid || app.tax_computation?.tdsPaid || '₹1,75,000')}
+                </div>
               </div>
               <div>
                 <div className="text-emerald-600 font-bold">Refund Due</div>
-                <div className="font-extrabold text-emerald-700 text-sm mt-0.5">{app.tax_computation?.refundDue || '₹6,800'}</div>
+                <div className="font-extrabold text-emerald-700 text-sm mt-0.5">
+                  {safeRender(app.tax_computation?.refundDue || app.tax_computation?.refund || '₹6,800')}
+                </div>
               </div>
             </div>
           </div>
@@ -217,7 +242,7 @@ export default function ITRDetailPage({ params }) {
               <span>📝</span> E-Filing Remarks
             </h3>
             <div className="text-xs text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-200">
-              {app.admin_notes || 'Form 26AS & AIS matched with banking statements. E-verification initiated.'}
+              {safeRender(app.admin_notes, 'Form 26AS & AIS matched with banking statements. E-verification initiated.')}
             </div>
           </div>
         </div>

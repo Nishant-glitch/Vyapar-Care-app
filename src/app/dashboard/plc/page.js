@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import DataTable from '@/components/DataTable';
 import StatusBadge from '@/components/StatusBadge';
 import { getAllPLCApplications } from '@/lib/adminDatabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, safeRender } from '@/lib/utils';
 
 export default function PLCListPage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function PLCListPage() {
       key: 'application_id',
       label: 'Application ID',
       render: (val, row) => (
-        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{val || row.id}</span>
+        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{safeRender(val || row.id)}</span>
       ),
     },
     {
@@ -47,8 +47,8 @@ export default function PLCListPage() {
       label: 'Proposed Company Name',
       render: (val, row) => (
         <div>
-          <div className="font-semibold text-slate-900">{val || row.company?.proposedName1 || 'PLC Incorporation'}</div>
-          <div className="text-[11px] text-slate-500">Applicant: {row.applicant_name || row.applicant?.name}</div>
+          <div className="font-semibold text-slate-900">{safeRender(val || row.company?.proposedName1 || 'PLC Incorporation')}</div>
+          <div className="text-[11px] text-slate-500">Applicant: {safeRender(row.applicant_name || row.applicant?.name || '—')}</div>
         </div>
       ),
     },
@@ -57,7 +57,7 @@ export default function PLCListPage() {
       label: 'Directors',
       render: (val, row) => (
         <span className="font-medium text-slate-700">
-          👥 {val || row.directors?.length || 2} Directors
+          👥 {Array.isArray(row.directors) ? row.directors.length : (val || 2)} Directors
         </span>
       ),
     },
@@ -65,13 +65,13 @@ export default function PLCListPage() {
       key: 'authorized_capital',
       label: 'Auth Capital',
       render: (val, row) => (
-        <span className="font-semibold text-slate-900">{val || row.company?.capital || '₹10,00,000'}</span>
+        <span className="font-semibold text-slate-900">{safeRender(val || row.company?.capital || '₹10,00,000')}</span>
       ),
     },
     {
       key: 'status',
       label: 'Status',
-      render: (val) => <StatusBadge status={val} />,
+      render: (val) => <StatusBadge status={safeRender(val, 'submitted')} />,
     },
     {
       key: 'created_at',

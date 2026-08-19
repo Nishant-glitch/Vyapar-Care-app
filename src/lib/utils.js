@@ -58,6 +58,7 @@ export function maskAadhaar(aadhaar) {
   return `•••• •••• ${clean.slice(-4)}`;
 }
 
+
 /** Generate and trigger CSV download */
 export function downloadCSV(data, filename = 'export.csv') {
   if (!data || !data.length) return;
@@ -83,3 +84,27 @@ export function downloadCSV(data, filename = 'export.csv') {
   link.click();
   document.body.removeChild(link);
 }
+
+/** Safely render values in JSX without crashing on JSONB objects/arrays */
+export function safeRender(value, fallback = 'N/A') {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === 'object') {
+    if (Array.isArray(value)) {
+      if (value.length === 0) return fallback;
+      return value.map((item) => (typeof item === 'object' ? safeRender(item) : String(item))).join(', ');
+    }
+    if (value.categoryLabel) return String(value.categoryLabel);
+    if (value.category) return String(value.category);
+    if (value.label) return String(value.label);
+    if (value.name) return String(value.name);
+    if (value.title) return String(value.title);
+    if (value.value !== undefined) return String(value.value);
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch {
+      return fallback;
+    }
+  }
+  return String(value);
+}
+

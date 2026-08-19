@@ -3,7 +3,7 @@
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { getTMApplicationById, updateTMStatus } from '@/lib/adminDatabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, safeRender } from '@/lib/utils';
 import StatusBadge from '@/components/StatusBadge';
 import DocumentViewer from '@/components/DocumentViewer';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
@@ -61,6 +61,20 @@ export default function TrademarkDetailPage({ params }) {
     );
   }
 
+  const rawDocs = app.documents || {};
+  const docList = Array.isArray(rawDocs)
+    ? rawDocs
+    : Object.entries(rawDocs).map(([key, val]) => ({
+        label: key.replace(/_/g, ' '),
+        name: typeof val === 'object' ? val.name || key : key,
+        file_url: typeof val === 'object' ? val.file_url || val.url : val,
+        status: typeof val === 'object' ? val.status || 'pending' : 'pending',
+      }));
+
+  const classEntries = typeof app.class_descriptions === 'object' && app.class_descriptions !== null
+    ? Object.entries(app.class_descriptions)
+    : [['Class 9', 'Computer software'], ['Class 42', 'SaaS & cloud computing']];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -75,7 +89,7 @@ export default function TrademarkDetailPage({ params }) {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold text-slate-900 font-mono">
-                {app.application_id || app.id}
+                {safeRender(app.application_id || app.id)}
               </h2>
               <StatusBadge status={app.status} />
             </div>
@@ -100,19 +114,27 @@ export default function TrademarkDetailPage({ params }) {
               <div className="sm:col-span-2 space-y-3 text-xs">
                 <div>
                   <div className="text-slate-400 font-semibold mb-0.5">Brand / Trademark Name</div>
-                  <div className="text-xl font-black text-slate-900 tracking-wide">{app.mark_details?.trademarkName || app.trademark_name}</div>
+                  <div className="text-xl font-black text-slate-900 tracking-wide">
+                    {safeRender(app.mark_details?.trademarkName || app.mark_details?.wordmark || app.trademark_name || 'Brand Mark')}
+                  </div>
                 </div>
                 <div>
                   <div className="text-slate-400 font-semibold mb-0.5">Mark Type</div>
-                  <div className="font-semibold text-slate-800">{app.mark_details?.markType || 'Word & Device Logo'}</div>
+                  <div className="font-semibold text-slate-800">
+                    {safeRender(app.mark_details?.markType || 'Word & Device Logo')}
+                  </div>
                 </div>
                 <div>
                   <div className="text-slate-400 font-semibold mb-0.5">Colour / Visual Claim</div>
-                  <div className="text-slate-700">{app.mark_details?.colourClaim || 'Standard Colors Claimed'}</div>
+                  <div className="text-slate-700">
+                    {safeRender(app.mark_details?.colourClaim || 'Standard Colors Claimed')}
+                  </div>
                 </div>
                 <div>
                   <div className="text-slate-400 font-semibold mb-0.5">Applicant Category</div>
-                  <div className="font-semibold text-amber-700">{app.applicant_type || 'Individual / Small Enterprise'}</div>
+                  <div className="font-semibold text-amber-700">
+                    {safeRender(app.applicant_type || app.applicant_details?.category || 'Individual / Small Enterprise')}
+                  </div>
                 </div>
               </div>
 
@@ -120,7 +142,7 @@ export default function TrademarkDetailPage({ params }) {
               <div className="flex flex-col items-center justify-center p-3 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Device Logo</div>
                 <img
-                  src={app.mark_details?.logoUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'}
+                  src={app.mark_details?.logoUrl || app.mark_details?.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'}
                   alt="Trademark Logo"
                   className="w-28 h-28 object-cover rounded-lg shadow-sm border border-slate-200"
                 />
@@ -135,10 +157,10 @@ export default function TrademarkDetailPage({ params }) {
             </h3>
 
             <div className="space-y-3">
-              {Object.entries(app.class_descriptions || { 'Class 9': 'Computer software', 'Class 42': 'SaaS & cloud computing' }).map(([clsKey, desc]) => (
+              {classEntries.map(([clsKey, desc]) => (
                 <div key={clsKey} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
-                  <div className="font-bold text-[#1B2B5E] mb-1">{clsKey}</div>
-                  <div className="text-slate-700 leading-relaxed">{desc}</div>
+                  <div className="font-bold text-[#1B2B5E] mb-1">{safeRender(clsKey)}</div>
+                  <div className="text-slate-700 leading-relaxed">{safeRender(desc)}</div>
                 </div>
               ))}
             </div>
@@ -153,15 +175,15 @@ export default function TrademarkDetailPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Usage Claim</div>
-                <div className="font-bold text-slate-800">{app.usage_details?.usageType || 'Proposed to be used'}</div>
+                <div className="font-bold text-slate-800">{safeRender(app.usage_details?.usageType || app.usage_details?.type || 'Proposed to be used')}</div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Territory</div>
-                <div className="font-medium text-slate-800">{app.usage_details?.territory || 'India'}</div>
+                <div className="font-medium text-slate-800">{safeRender(app.usage_details?.territory || 'India')}</div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Authorised TM Attorney</div>
-                <div className="font-medium text-slate-800">{app.agent_details?.attorneyName || 'Vyapar Care TM Legal Cell'}</div>
+                <div className="font-medium text-slate-800">{safeRender(app.agent_details?.attorneyName || 'Vyapar Care TM Legal Cell')}</div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Power of Attorney (TM-48)</div>
@@ -222,13 +244,13 @@ export default function TrademarkDetailPage({ params }) {
           {/* Trademark Documents Checklist */}
           <div className="admin-card">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <span>📁</span> TM Evidence & Legal Proofs
+              <span>📁</span> TM Evidence & Legal Proofs ({docList.length})
             </h3>
             <div className="space-y-3">
-              {(app.documents || []).map((doc, idx) => (
+              {docList.map((doc, idx) => (
                 <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
                   <div className="flex items-center justify-between">
-                    <div className="font-bold text-slate-900">{doc.name}</div>
+                    <div className="font-bold text-slate-900">{safeRender(doc.name || doc.label)}</div>
                     <StatusBadge status={doc.status} />
                   </div>
                   <div className="flex justify-end gap-2 pt-1">
@@ -250,7 +272,7 @@ export default function TrademarkDetailPage({ params }) {
               <span>📝</span> Trademark Registry Notes
             </h3>
             <div className="text-xs text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-200">
-              {app.admin_notes || 'Form TM-A draft prepared with NICE Classification specifications.'}
+              {safeRender(app.admin_notes, 'Form TM-A draft prepared with NICE Classification specifications.')}
             </div>
           </div>
         </div>
@@ -264,8 +286,8 @@ export default function TrademarkDetailPage({ params }) {
         onUpdateStatus={(docName, newDocStatus, remarks) => {
           setApp((prev) => ({
             ...prev,
-            documents: (prev.documents || []).map((d) =>
-              d.name === docName ? { ...d, status: newDocStatus, remarks } : d
+            documents: docList.map((d) =>
+              d.name === docName || d.label === docName ? { ...d, status: newDocStatus, remarks } : d
             ),
           }));
         }}
@@ -273,3 +295,4 @@ export default function TrademarkDetailPage({ params }) {
     </div>
   );
 }
+

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import DataTable from '@/components/DataTable';
 import StatusBadge from '@/components/StatusBadge';
 import { getAllFSSAIApplications } from '@/lib/adminDatabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, safeRender } from '@/lib/utils';
 
 export default function FSSAIPage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function FSSAIPage() {
       key: 'application_id',
       label: 'Application ID',
       render: (val, row) => (
-        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{val || row.id}</span>
+        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{safeRender(val || row.id)}</span>
       ),
     },
     {
@@ -47,8 +47,8 @@ export default function FSSAIPage() {
       label: 'Food Business (FBO)',
       render: (val, row) => (
         <div>
-          <div className="font-semibold text-slate-900">{val || row.business_details?.foodBusinessName || 'FBO'}</div>
-          <div className="text-[11px] text-slate-500">Applicant: {row.applicant_name || row.applicant_details?.name}</div>
+          <div className="font-semibold text-slate-900">{safeRender(val || row.business_details?.foodBusinessName || 'FBO')}</div>
+          <div className="text-[11px] text-slate-500">Applicant: {safeRender(row.applicant_name || row.applicant_details?.name || row.applicant_details?.fullName || '—')}</div>
         </div>
       ),
     },
@@ -57,19 +57,19 @@ export default function FSSAIPage() {
       label: 'License Tier',
       render: (val) => (
         <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-bold capitalize">
-          {val || 'State License'}
+          {safeRender(val, 'State License')}
         </span>
       ),
     },
     {
       key: 'kob',
       label: 'Kind of Business (KOB)',
-      render: (val) => <span className="text-xs text-slate-700">{val || 'Restaurant / Bakery'}</span>,
+      render: (val) => <span className="text-xs text-slate-700">{safeRender(val, 'Restaurant / Bakery')}</span>,
     },
     {
       key: 'status',
       label: 'Status',
-      render: (val) => <StatusBadge status={val} />,
+      render: (val) => <StatusBadge status={safeRender(val, 'submitted')} />,
     },
     {
       key: 'created_at',

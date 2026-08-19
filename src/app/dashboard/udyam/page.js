@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import DataTable from '@/components/DataTable';
 import StatusBadge from '@/components/StatusBadge';
 import { getAllUdyamApplications } from '@/lib/adminDatabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, safeRender } from '@/lib/utils';
 
 export default function UdyamListPage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function UdyamListPage() {
       key: 'application_id',
       label: 'Application ID',
       render: (val, row) => (
-        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{val || row.id}</span>
+        <span className="font-mono font-bold text-xs text-[#1B2B5E]">{safeRender(val || row.id)}</span>
       ),
     },
     {
@@ -47,8 +47,12 @@ export default function UdyamListPage() {
       label: 'Enterprise Name',
       render: (val, row) => (
         <div>
-          <div className="font-semibold text-slate-900">{val || row.business_details?.enterpriseName || 'Enterprise'}</div>
-          <div className="text-[11px] text-slate-500">Applicant: {row.applicant_name || row.aadhaar_details?.applicantName}</div>
+          <div className="font-semibold text-slate-900">
+            {safeRender(val || row.business_details?.enterpriseName || 'Enterprise')}
+          </div>
+          <div className="text-[11px] text-slate-500">
+            Applicant: {safeRender(row.applicant_name || row.aadhaar_details?.applicantName || '—')}
+          </div>
         </div>
       ),
     },
@@ -57,7 +61,7 @@ export default function UdyamListPage() {
       label: 'Classification',
       render: (val) => (
         <span className="px-2 py-0.5 rounded bg-pink-100 text-pink-800 text-xs font-bold">
-          {val || 'Micro Enterprise'}
+          {safeRender(val, 'Micro Enterprise')}
         </span>
       ),
     },
@@ -65,13 +69,13 @@ export default function UdyamListPage() {
       key: 'udyam_registration_number',
       label: 'Udyam Registration No.',
       render: (val) => (
-        <span className="font-mono font-bold text-emerald-700 text-xs">{val || 'Pending'}</span>
+        <span className="font-mono font-bold text-emerald-700 text-xs">{safeRender(val, 'Pending')}</span>
       ),
     },
     {
       key: 'status',
       label: 'Status',
-      render: (val) => <StatusBadge status={val} />,
+      render: (val) => <StatusBadge status={safeRender(val, 'submitted')} />,
     },
     {
       key: 'created_at',

@@ -3,7 +3,7 @@
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { getPLCApplicationById, updatePLCStatus } from '@/lib/adminDatabase';
-import { maskPAN, formatDate } from '@/lib/utils';
+import { maskPAN, formatDate, safeRender } from '@/lib/utils';
 import StatusBadge from '@/components/StatusBadge';
 import DocumentViewer from '@/components/DocumentViewer';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
@@ -59,6 +59,20 @@ export default function PLCDetailPage({ params }) {
     );
   }
 
+  const rawDocs = app.documents || {};
+  const docList = Array.isArray(rawDocs)
+    ? rawDocs
+    : Object.entries(rawDocs).map(([key, val]) => ({
+        label: key.replace(/_/g, ' '),
+        name: typeof val === 'object' ? val.name || key : key,
+        file_url: typeof val === 'object' ? val.file_url || val.url : val,
+        status: typeof val === 'object' ? val.status || 'pending' : 'pending',
+        category: 'Uploaded Document',
+      }));
+
+  const directorsList = Array.isArray(app.directors) ? app.directors : [];
+  const subscribersList = Array.isArray(app.subscribers) ? app.subscribers : [];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -73,7 +87,7 @@ export default function PLCDetailPage({ params }) {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold text-slate-900 font-mono">
-                {app.application_id || app.id}
+                {safeRender(app.application_id || app.id)}
               </h2>
               <StatusBadge status={app.status} />
             </div>
@@ -96,23 +110,33 @@ export default function PLCDetailPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Proposed Name (Choice 1)</div>
-                <div className="font-bold text-slate-900 text-sm">{app.company?.proposedName1 || app.company_name}</div>
+                <div className="font-bold text-slate-900 text-sm">
+                  {safeRender(app.company?.proposedName1 || app.company?.name || app.company_name || '—')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Proposed Name (Choice 2)</div>
-                <div className="font-medium text-slate-800">{app.company?.proposedName2 || '—'}</div>
+                <div className="font-medium text-slate-800">
+                  {safeRender(app.company?.proposedName2 || '—')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">State & RoC Office</div>
-                <div className="font-semibold text-slate-800">{app.company?.state || 'Karnataka'} ({app.company?.rocOffice || 'RoC Bangalore'})</div>
+                <div className="font-semibold text-slate-800">
+                  {safeRender(app.company?.state || 'Karnataka')} ({safeRender(app.company?.rocOffice || 'RoC Bangalore')})
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Authorized / Paid-up Capital</div>
-                <div className="font-bold text-slate-900">{app.authorized_capital || '₹10,00,000'} / {app.paidup_capital || '₹1,00,000'}</div>
+                <div className="font-bold text-slate-900">
+                  {safeRender(app.authorized_capital || app.company?.capital || '₹10,00,000')} / {safeRender(app.paidup_capital || '₹1,00,000')}
+                </div>
               </div>
               <div className="sm:col-span-2">
                 <div className="text-slate-400 font-semibold mb-0.5">Main Industrial Objects (MOA Clause III)</div>
-                <div className="text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100">{app.company?.mainObjects || 'IT consultancy and software development services.'}</div>
+                <div className="text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                  {safeRender(app.company?.mainObjects || app.business_activity || 'IT consultancy and software development services.')}
+                </div>
               </div>
             </div>
           </div>
@@ -120,18 +144,20 @@ export default function PLCDetailPage({ params }) {
           {/* Directors Section with DIN */}
           <div className="admin-card">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span>👥</span> Proposed Directors & DIN ({app.directors?.length || 2})
+              <span>👥</span> Proposed Directors & DIN ({directorsList.length || 2})
             </h3>
             <div className="space-y-3">
-              {(app.directors || []).map((dir, idx) => (
+              {(directorsList.length > 0 ? directorsList : [
+                { name: 'Director 1', din: 'DIN to be allotted', sharePercent: '50%' }
+              ]).map((dir, idx) => (
                 <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <div className="font-bold text-slate-900 text-sm">{dir.name}</div>
-                    <div className="text-slate-500">{dir.din || 'DIN to be allotted'} • Equity Share: {dir.sharePercent || '50%'}</div>
+                    <div className="font-bold text-slate-900 text-sm">{safeRender(dir.name || dir.fullName)}</div>
+                    <div className="text-slate-500">{safeRender(dir.din, 'DIN to be allotted')} • Equity Share: {safeRender(dir.sharePercent || dir.share, '50%')}</div>
                   </div>
                   <div className="font-mono text-slate-600 sm:text-right">
-                    <div>PAN: {maskPAN(dir.pan)}</div>
-                    <div className="text-[11px] text-slate-400">{dir.phone}</div>
+                    <div>PAN: {maskPAN(typeof dir.pan === 'string' ? dir.pan : '')}</div>
+                    <div className="text-[11px] text-slate-400">{safeRender(dir.phone || dir.mobile)}</div>
                   </div>
                 </div>
               ))}
@@ -154,12 +180,14 @@ export default function PLCDetailPage({ params }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {(app.subscribers || []).map((sub, idx) => (
+                  {(subscribersList.length > 0 ? subscribersList : [
+                    { name: 'Subscriber 1', shares: 5000, value: '₹50,000', percentage: '50%' }
+                  ]).map((sub, idx) => (
                     <tr key={idx}>
-                      <td className="font-semibold text-slate-900">{sub.name}</td>
-                      <td>{sub.shares?.toLocaleString() || 5000} shares</td>
-                      <td>{sub.value || '₹50,000'}</td>
-                      <td className="font-bold text-[#1B2B5E]">{sub.percentage || '50%'}</td>
+                      <td className="font-semibold text-slate-900">{safeRender(sub.name)}</td>
+                      <td>{safeRender(sub.shares?.toLocaleString() || sub.shares || 5000)} shares</td>
+                      <td>{safeRender(sub.value || '₹50,000')}</td>
+                      <td className="font-bold text-[#1B2B5E]">{safeRender(sub.percentage || '50%')}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -175,7 +203,7 @@ export default function PLCDetailPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Premises Type</div>
-                <div className="font-bold text-slate-800">{app.office?.type || 'Commercial Rented'}</div>
+                <div className="font-bold text-slate-800">{safeRender(app.office?.type || 'Commercial Rented')}</div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Owner NOC Attached</div>
@@ -183,7 +211,7 @@ export default function PLCDetailPage({ params }) {
               </div>
               <div className="sm:col-span-2">
                 <div className="text-slate-400 font-semibold mb-0.5">Registered Address</div>
-                <div className="text-slate-800">{app.office?.address || 'Suite 304, Silicon Towers, Koramangala, Bengaluru - 560095'}</div>
+                <div className="text-slate-800">{safeRender(app.office?.address || app.registered_office || 'Suite 304, Silicon Towers, Koramangala, Bengaluru - 560095')}</div>
               </div>
             </div>
           </div>
@@ -229,15 +257,15 @@ export default function PLCDetailPage({ params }) {
           {/* Documents Checklist */}
           <div className="admin-card">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <span>📁</span> KYC & Incorporation Documents
+              <span>📁</span> KYC & Incorporation Documents ({docList.length})
             </h3>
             <div className="space-y-3">
-              {(app.documents || []).map((doc, idx) => (
+              {docList.map((doc, idx) => (
                 <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-bold text-slate-900">{doc.label || doc.name}</div>
-                      <div className="text-[10px] text-slate-500">{doc.category}</div>
+                      <div className="font-bold text-slate-900">{safeRender(doc.label || doc.name)}</div>
+                      <div className="text-[10px] text-slate-500">{safeRender(doc.category)}</div>
                     </div>
                     <StatusBadge status={doc.status} />
                   </div>
@@ -260,7 +288,7 @@ export default function PLCDetailPage({ params }) {
               <span>📝</span> RoC & MCA Scrutiny Notes
             </h3>
             <div className="text-xs text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-200 mb-3">
-              {app.admin_notes || 'RUN name approval complete. Form SPICe+ Part B with linked AGILE-PRO, INC-9 and e-MOA/AOA forms underway.'}
+              {safeRender(app.admin_notes, 'RUN name approval complete. Form SPICe+ Part B with linked AGILE-PRO, INC-9 and e-MOA/AOA forms underway.')}
             </div>
           </div>
         </div>
@@ -274,8 +302,8 @@ export default function PLCDetailPage({ params }) {
         onUpdateStatus={(docId, newDocStatus, remarks) => {
           setApp((prev) => ({
             ...prev,
-            documents: (prev.documents || []).map((d) =>
-              d.document_id === docId || d.label === docId ? { ...d, status: newDocStatus, remarks } : d
+            documents: docList.map((d) =>
+              d.document_id === docId || d.label === docId || d.name === docId ? { ...d, status: newDocStatus, remarks } : d
             ),
           }));
         }}

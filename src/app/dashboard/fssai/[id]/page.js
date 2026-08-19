@@ -3,7 +3,7 @@
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { getFSSAIApplicationById, updateFSSAIStatus } from '@/lib/adminDatabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, safeRender } from '@/lib/utils';
 import StatusBadge from '@/components/StatusBadge';
 import DocumentViewer from '@/components/DocumentViewer';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
@@ -61,6 +61,18 @@ export default function FSSAIDetailPage({ params }) {
     );
   }
 
+  const rawDocs = app.documents || {};
+  const docList = Array.isArray(rawDocs)
+    ? rawDocs
+    : Object.entries(rawDocs).map(([key, val]) => ({
+        label: key.replace(/_/g, ' '),
+        name: typeof val === 'object' ? val.name || key : key,
+        file_url: typeof val === 'object' ? val.file_url || val.url : val,
+        status: typeof val === 'object' ? val.status || 'pending' : 'pending',
+      }));
+
+  const productsList = Array.isArray(app.products) ? app.products : [];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -75,7 +87,7 @@ export default function FSSAIDetailPage({ params }) {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold text-slate-900 font-mono">
-                {app.application_id || app.id}
+                {safeRender(app.application_id || app.id)}
               </h2>
               <StatusBadge status={app.status} />
             </div>
@@ -98,19 +110,27 @@ export default function FSSAIDetailPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Food Business Name</div>
-                <div className="font-bold text-slate-900 text-sm">{app.business_details?.foodBusinessName || app.business_name}</div>
+                <div className="font-bold text-slate-900 text-sm">
+                  {safeRender(app.business_details?.foodBusinessName || app.business_details?.businessName || app.business_name || '—')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">License Tier / Validity</div>
-                <div className="font-bold text-emerald-700">{app.license_type || 'State License'} ({app.validity_years || 1} Years)</div>
+                <div className="font-bold text-emerald-700">
+                  {safeRender(app.license_type || app.license_category || 'State License')} ({safeRender(app.validity_years || 1)} Years)
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Kind of Business (KOB)</div>
-                <div className="font-semibold text-slate-800">{app.kob || 'Restaurant & Bakery'}</div>
+                <div className="font-semibold text-slate-800">
+                  {safeRender(app.kob || app.business_type || 'Restaurant & Bakery')}
+                </div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Annual Turnover Estimate</div>
-                <div className="font-semibold text-slate-800">{app.business_details?.turnover || '₹35 Lakhs / yr'}</div>
+                <div className="font-semibold text-slate-800">
+                  {safeRender(app.business_details?.turnover || app.turnover || '₹35 Lakhs / yr')}
+                </div>
               </div>
             </div>
           </div>
@@ -118,16 +138,18 @@ export default function FSSAIDetailPage({ params }) {
           {/* Products & Food Categories */}
           <div className="admin-card">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span>🥦</span> Food Products & Manufacturing Capacity
+              <span>🥦</span> Food Products & Manufacturing Capacity ({productsList.length})
             </h3>
             <div className="space-y-2">
-              {(app.products || []).map((prod, idx) => (
+              {(productsList.length > 0 ? productsList : [
+                { name: 'Prepared Food & Beverages', category: 'Category 16 (Food Services)', capacity: '100 kg/day' }
+              ]).map((prod, idx) => (
                 <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs flex justify-between items-center">
                   <div>
-                    <div className="font-bold text-slate-900">{prod.name}</div>
-                    <div className="text-slate-500">Category: {prod.category}</div>
+                    <div className="font-bold text-slate-900">{safeRender(prod.name || prod.productName)}</div>
+                    <div className="text-slate-500">Category: {safeRender(prod.category || prod.foodCategory || '—')}</div>
                   </div>
-                  <div className="font-semibold text-[#1B2B5E]">{prod.capacity}</div>
+                  <div className="font-semibold text-[#1B2B5E]">{safeRender(prod.capacity || prod.productionCapacity || '—')}</div>
                 </div>
               ))}
             </div>
@@ -141,15 +163,15 @@ export default function FSSAIDetailPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Premises Name</div>
-                <div className="font-bold text-slate-800">{app.premises_details?.premisesName || 'Store Premise'}</div>
+                <div className="font-bold text-slate-800">{safeRender(app.premises_details?.premisesName || 'Store Premise')}</div>
               </div>
               <div>
                 <div className="text-slate-400 font-semibold mb-0.5">Premises Type</div>
-                <div className="font-medium text-slate-800">{app.premises_details?.premisesType || 'Commercial Rented'}</div>
+                <div className="font-medium text-slate-800">{safeRender(app.premises_details?.premisesType || 'Commercial Rented')}</div>
               </div>
               <div className="sm:col-span-2">
                 <div className="text-slate-400 font-semibold mb-0.5">Premises Address</div>
-                <div className="text-slate-800">{app.premises_details?.address || 'Plot 108, Hill Road, Bandra West, Mumbai - 400050'}</div>
+                <div className="text-slate-800">{safeRender(app.premises_details?.address || app.premises_address || 'Plot 108, Hill Road, Bandra West, Mumbai - 400050')}</div>
               </div>
             </div>
           </div>
@@ -206,13 +228,13 @@ export default function FSSAIDetailPage({ params }) {
           {/* FSSAI Documents Checklist */}
           <div className="admin-card">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <span>📁</span> FSSAI Compliance Documents
+              <span>📁</span> FSSAI Compliance Documents ({docList.length})
             </h3>
             <div className="space-y-3">
-              {(app.documents || []).map((doc, idx) => (
+              {docList.map((doc, idx) => (
                 <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
                   <div className="flex items-center justify-between">
-                    <div className="font-bold text-slate-900">{doc.name}</div>
+                    <div className="font-bold text-slate-900">{safeRender(doc.name || doc.label)}</div>
                     <StatusBadge status={doc.status} />
                   </div>
                   <div className="flex justify-end gap-2 pt-1">
@@ -234,7 +256,7 @@ export default function FSSAIDetailPage({ params }) {
               <span>📝</span> FoSCoS Scrutiny Notes
             </h3>
             <div className="text-xs text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-200">
-              {app.admin_notes || 'Application initiated on National FoSCoS portal with designated Food Safety Officer review.'}
+              {safeRender(app.admin_notes, 'Application initiated on National FoSCoS portal with designated Food Safety Officer review.')}
             </div>
           </div>
         </div>
@@ -248,8 +270,8 @@ export default function FSSAIDetailPage({ params }) {
         onUpdateStatus={(docName, newDocStatus, remarks) => {
           setApp((prev) => ({
             ...prev,
-            documents: (prev.documents || []).map((d) =>
-              d.name === docName ? { ...d, status: newDocStatus, remarks } : d
+            documents: docList.map((d) =>
+              d.name === docName || d.label === docName ? { ...d, status: newDocStatus, remarks } : d
             ),
           }));
         }}
@@ -257,3 +279,4 @@ export default function FSSAIDetailPage({ params }) {
     </div>
   );
 }
+
