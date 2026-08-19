@@ -33,13 +33,13 @@ export default function FSSAIPaymentScreen({ navigation }) {
     try {
       const record = await submitApplication(user);
       navigation.navigate('FSSAIConfirmation', {
-        applicationId: record?.application_id || formState.submittedApplicationId,
+        applicationId: record?.application_id || record?.applicationId || formState.submittedApplicationId,
         paymentPlan,
         paidAmount: payableAmount,
       });
     } catch (err) {
       console.error('Payment / Submission Error:', err);
-      Alert.alert('Submission Error', 'Failed to submit FSSAI application. Please try again.');
+      Alert.alert('Submission Error', err.message || 'Failed to submit FSSAI application. Please try again.');
     }
   };
 

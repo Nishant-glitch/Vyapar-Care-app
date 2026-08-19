@@ -30,8 +30,8 @@ export default function UdyamPaymentScreen({ navigation }) {
     try {
       const result = await submit(user);
       navigation.navigate('UdyamConfirmation', {
-        applicationId: result.applicationId || result.id || 'UDYAM-2026-000001',
-        submittedAt: result.submittedAt || new Date().toISOString(),
+        applicationId: result?.application_id || result?.applicationId || result?.id || 'UDYAM-2026-000001',
+        submittedAt: result?.submittedAt || new Date().toISOString(),
       });
     } catch (err) {
       Alert.alert('Payment Submission Error', err.message || 'Payment could not be processed.');

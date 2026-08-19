@@ -30,8 +30,8 @@ export default function IECPaymentScreen({ navigation }) {
     try {
       const result = await submit(user);
       navigation.navigate('IECConfirmation', {
-        applicationId: result.applicationId || result.id || 'IEC-2026-000001',
-        submittedAt: result.submittedAt || new Date().toISOString(),
+        applicationId: result?.application_id || result?.applicationId || result?.id || 'IEC-2026-000001',
+        submittedAt: result?.submittedAt || new Date().toISOString(),
       });
     } catch (err) {
       Alert.alert('Payment Error', err.message || 'Payment could not be processed.');

@@ -37,7 +37,7 @@ export default function GSTPaymentScreen({ navigation }) {
     try {
       const result = await submit(user);
       navigation.navigate('GSTConfirmation', {
-        applicationId: result.id || 'GST-2026-000101',
+        applicationId: result?.application_id || result?.applicationId || result?.id || 'GST-2026-000101',
         paidAmount: payableAmount,
         paymentPlan: selectedPlan,
       });
