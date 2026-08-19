@@ -1,1 +1,0 @@
-# rural-skill-workshop-app
