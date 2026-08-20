@@ -782,3 +782,76 @@ export const REQUIRED_FORMATS = [
     fileType: 'PDF / DOC',
   },
 ];
+
+/**
+ * ProFin Financial Services Section
+ * Powered by ProFin Portal (https://profin.gstsuvidhakendra.org.in)
+ */
+export const FINANCIAL_SERVICES = {
+  id: 'financial_services',
+  title: 'Financial Services',
+  icon: '💳',
+  subtitle: 'Credit Cards, Loans, Insurance & Banking',
+  badge: '24 products',
+  type: 'financial',
+  categories: [
+    {
+      id: 'credit_card',
+      title: 'Credit Card',
+      icon: '💳',
+      badge: '11 options',
+      items: [
+        { id: 'au_cc', name: 'AU Small Finance Bank Credit Card', partner: 'AU Bank', type: 'credit_card' },
+        { id: 'yes_cc', name: 'Yes Bank Credit Card', partner: 'Yes Bank', type: 'credit_card' },
+        { id: 'axis_cc', name: 'Axis Credit Card', partner: 'Axis Bank', type: 'credit_card' },
+        { id: 'hdfc_cc', name: 'HDFC Credit Card', partner: 'HDFC Bank', type: 'credit_card' },
+        { id: 'tata_hdfc_cc', name: 'Tata Neu HDFC Bank Credit Card', partner: 'HDFC Bank', type: 'credit_card' },
+        { id: 'rbl_shoprite_cc', name: 'RBL Shoprite Credit Card', partner: 'RBL Bank', type: 'credit_card' },
+        { id: 'iocl_rbl_cc', name: 'IndianOil RBL Bank XTRA Credit Card', partner: 'RBL Bank', type: 'credit_card' },
+        { id: 'kiwi_cc', name: 'KIWI Rupay Credit Card', partner: 'KIWI', type: 'credit_card' },
+        { id: 'indusind_cc', name: 'IndusInd Bank Tiger Credit Card', partner: 'IndusInd Bank', type: 'credit_card' },
+        { id: 'sbi_cc', name: 'SBI Credit Card', partner: 'SBI', type: 'credit_card' },
+        { id: 'scapia_cc', name: 'Scapia Federal Bank Credit Card', partner: 'Federal Bank', type: 'credit_card' },
+      ],
+    },
+    {
+      id: 'personal_loan',
+      title: 'Personal Loan',
+      icon: '🏦',
+      badge: '6 options',
+      items: [
+        { id: 'kreditbee', name: 'KreditBee', partner: 'KreditBee', type: 'loan' },
+        { id: 'prefr', name: 'Prefr', partner: 'Prefr', type: 'loan' },
+        { id: 'incred', name: 'InCred Personal Loan', partner: 'InCred', type: 'loan' },
+        { id: 'moneyview', name: 'Moneyview Personal Loan', partner: 'Moneyview', type: 'loan' },
+        { id: 'aditya_birla', name: 'Aditya Birla Personal Loan', partner: 'Aditya Birla', type: 'loan' },
+        { id: 'poonawalla', name: 'Poonawalla Fincorp Personal Loan', partner: 'Poonawalla', type: 'loan' },
+      ],
+    },
+    {
+      id: 'saving_account',
+      title: 'Saving Account Opening',
+      icon: '🏧',
+      badge: '2 options',
+      items: [
+        { id: 'kotak_811_super', name: 'Kotak 811 Super Account', partner: 'Kotak Mahindra Bank', type: 'account' },
+        { id: 'kotak_811_classic', name: 'Kotak 811 Classic Account', partner: 'Kotak Mahindra Bank', type: 'account' },
+      ],
+    },
+    {
+      id: 'insurance',
+      title: 'Insurance',
+      icon: '🛡️',
+      badge: '5 options',
+      items: [
+        { id: 'two_wheeler_ins', name: 'Two Wheeler Insurance', partner: 'ProFin', type: 'insurance' },
+        { id: 'car_ins', name: 'Car Insurance', partner: 'ProFin', type: 'insurance' },
+        { id: 'health_ins', name: 'Health Insurance', partner: 'ProFin', type: 'insurance' },
+        { id: 'term_life_ins', name: 'Term Life Insurance', partner: 'ProFin', type: 'insurance' },
+        { id: 'investment_ins', name: 'Investment', partner: 'ProFin', type: 'insurance' },
+      ],
+    },
+  ],
+  profinUrl: 'https://profin.gstsuvidhakendra.org.in',
+};
+

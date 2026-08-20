@@ -15,7 +15,12 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomNav from '../components/BottomNav';
-import { CATEGORIES, DIRECT_SERVICES, REQUIRED_FORMATS } from '../config/servicesHub';
+import {
+  CATEGORIES,
+  DIRECT_SERVICES,
+  FINANCIAL_SERVICES,
+  REQUIRED_FORMATS,
+} from '../config/servicesHub';
 import { COLORS } from '../constants/theme';
 import { formatINR } from '../utils/currency';
 
@@ -323,7 +328,79 @@ export default function MyWorkScreen() {
         </View>
 
         {/* ========================================================================= */}
-        {/* SECTION 3: CATEGORY 12 - ALL REQUIRED FORMATS                             */}
+        {/* SECTION 3: FINANCIAL & INSURANCE SERVICES (PROFIN PORTAL)                  */}
+        {/* ========================================================================= */}
+        <View style={[styles.sectionHeaderWrap, { marginTop: 24 }]}>
+          <Text style={styles.sectionHeading}>Financial & Insurance Services</Text>
+          <Text style={styles.sectionSub}>Credit Cards, Loans, Savings & Insurance by ProFin</Text>
+        </View>
+
+        <View style={styles.directGrid}>
+          {/* Card 1: Financial Services (Credit Cards, Loans, Savings) */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.directCard,
+              styles.financialCard,
+              pressed && styles.cardPressed,
+            ]}
+            onPress={() =>
+              navigation.navigate('FinancialServices', { defaultTab: 'credit_card' })
+            }
+          >
+            <View style={styles.directTopRow}>
+              <View style={[styles.directIconCircle, { backgroundColor: '#EFF6FF' }]}>
+                <Text style={styles.directIcon}>💳</Text>
+              </View>
+              <View style={[styles.directBadgePill, { backgroundColor: '#DBEAFE' }]}>
+                <Text style={[styles.directBadgeText, { color: '#1E40AF' }]}>19 products</Text>
+              </View>
+            </View>
+
+            <Text style={styles.directTitle}>Financial Services</Text>
+            <Text style={styles.directSubtitle} numberOfLines={2}>
+              Credit Cards, Personal Loans, Savings Account
+            </Text>
+
+            <View style={styles.directBottomRow}>
+              <Text style={styles.viewPlansText}>Explore 19 Options</Text>
+              <Text style={styles.viewPlansArrow}>→</Text>
+            </View>
+          </Pressable>
+
+          {/* Card 2: Insurance Services */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.directCard,
+              styles.financialCard,
+              pressed && styles.cardPressed,
+            ]}
+            onPress={() =>
+              navigation.navigate('FinancialServices', { defaultTab: 'insurance' })
+            }
+          >
+            <View style={styles.directTopRow}>
+              <View style={[styles.directIconCircle, { backgroundColor: '#ECFDF5' }]}>
+                <Text style={styles.directIcon}>🛡️</Text>
+              </View>
+              <View style={[styles.directBadgePill, { backgroundColor: '#D1FAE5' }]}>
+                <Text style={[styles.directBadgeText, { color: '#065F46' }]}>5 products</Text>
+              </View>
+            </View>
+
+            <Text style={styles.directTitle}>Insurance Services</Text>
+            <Text style={styles.directSubtitle} numberOfLines={2}>
+              Vehicle, Health, Life & Investment Plans
+            </Text>
+
+            <View style={styles.directBottomRow}>
+              <Text style={styles.viewPlansText}>Explore 5 Plans</Text>
+              <Text style={styles.viewPlansArrow}>→</Text>
+            </View>
+          </Pressable>
+        </View>
+
+        {/* ========================================================================= */}
+        {/* SECTION 4: CATEGORY 12 - ALL REQUIRED FORMATS                             */}
         {/* ========================================================================= */}
         <View style={[styles.sectionHeaderWrap, { marginTop: 24 }]}>
           <Text style={styles.sectionHeading}>Legal & Regulatory Formats</Text>

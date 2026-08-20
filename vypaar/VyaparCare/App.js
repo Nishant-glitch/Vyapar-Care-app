@@ -125,6 +125,7 @@ import TMUsageScreen from './screens/tm/TMUsageScreen';
 
 // Core App Screens
 import FinalPaymentDueScreen from './screens/FinalPaymentDueScreen';
+import FinancialServicesScreen from './screens/FinancialServicesScreen';
 import HelpSupportScreen from './screens/HelpSupportScreen';
 import HomeScreen from './screens/HomeScreen';
 import InvoiceScreen from './screens/InvoiceScreen';
@@ -183,6 +184,7 @@ export default function App() {
                           <Stack.Screen name="DSCPricing" component={PricingScreen} />
                           <Stack.Screen name="ISOPricing" component={PricingScreen} />
                           <Stack.Screen name="ChallanPricing" component={PricingScreen} />
+                          <Stack.Screen name="FinancialServices" component={FinancialServicesScreen} />
 
                           {/* ---------- Payment ---------- */}
                           <Stack.Screen name="PaymentSummary" component={PaymentSummaryScreen} />
