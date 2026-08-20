@@ -4,35 +4,27 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/theme';
 
-// tab -> stack route. Profile ka screen abhi banaya nahi hai (route: null)
 export const TABS = [
-  { key: 'Home', icon: '🏠', label: 'Home', route: 'Home' },
-  { key: 'My Work', icon: '📋', label: 'My Work', route: 'MyWork' },
-  { key: 'Payment', icon: '💳', label: 'Payment', route: 'PaymentHistory' },
-  { key: 'Documents', icon: '📄', label: 'Documents', route: 'UploadDocuments' },
-  { key: 'Profile', icon: '👤', label: 'Profile', route: null },
+  { key: 'Tax/Acc/Company', icon: '💼', label: 'Tax/Acc/Company', route: 'TaxCompany' },
+  { key: 'Insurance', icon: '🛡️', label: 'Insurance', route: 'Insurance' },
+  { key: 'Marketing', icon: '📢', label: 'Marketing', route: 'Marketing' },
+  { key: 'Web Service', icon: '🌐', label: 'Web Service', route: 'WebService' },
 ];
 
-export default function BottomNav({ activeTab = 'Home', onTabPress }) {
+export default function BottomNav({ activeTab = 'Tax/Acc/Company', onTabPress }) {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 
   const handlePress = (tab) => {
-    console.log(`Navigate to ${tab.key}`);
+    console.log(`BottomNav Press: ${tab.key} -> Route: ${tab.route}`);
 
-    // custom handler ho to wahi chalega, warna default routing
     if (onTabPress) {
       onTabPress(tab.key);
       return;
     }
     if (!tab.route || tab.key === activeTab) return;
 
-    // Home stack ka base hai — uspe wapas jaate waqt naya entry mat banao
-    if (tab.route === 'Home') {
-      navigation.navigate('Home');
-    } else {
-      navigation.navigate(tab.route);
-    }
+    navigation.navigate(tab.route);
   };
 
   return (
@@ -40,11 +32,24 @@ export default function BottomNav({ activeTab = 'Home', onTabPress }) {
       {TABS.map((tab) => {
         const active = tab.key === activeTab;
         return (
-          <Pressable key={tab.key} style={styles.tab} onPress={() => handlePress(tab)}>
-            {/* indicator hamesha render hota hai taaki tabs shift na hon */}
-            <View style={[styles.tabIndicator, active && styles.tabIndicatorActive]} />
-            <Text style={[styles.tabIcon, !active && styles.tabIconInactive]}>{tab.icon}</Text>
-            <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{tab.label}</Text>
+          <Pressable
+            key={tab.key}
+            style={styles.tab}
+            onPress={() => handlePress(tab)}
+          >
+            {/* Top gold indicator line when active */}
+            <View style={[styles.topLine, active && styles.topLineActive]} />
+
+            <Text style={[styles.tabIcon, !active && styles.tabIconInactive]}>
+              {tab.icon}
+            </Text>
+
+            <Text
+              style={[styles.tabLabel, active && styles.tabLabelActive]}
+              numberOfLines={1}
+            >
+              {tab.label}
+            </Text>
           </Pressable>
         );
       })}
@@ -57,23 +62,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: COLORS.white,
     borderTopWidth: 1,
-    borderTopColor: '#EEEEEE',
-    paddingTop: 6,
+    borderTopColor: '#E2E8F0',
+    paddingTop: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 10,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: 6,
+    position: 'relative',
   },
-  tabIndicator: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
+  topLine: {
+    width: '100%',
+    height: 3,
     backgroundColor: 'transparent',
     marginBottom: 4,
   },
-  tabIndicatorActive: {
-    backgroundColor: COLORS.primaryDark,
+  topLineActive: {
+    backgroundColor: '#C5991A',
   },
   tabIcon: {
     fontSize: 20,
@@ -82,12 +92,13 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   tabLabel: {
-    fontSize: 10,
-    color: COLORS.grayText,
-    marginTop: 3,
+    fontSize: 10.5,
+    color: '#64748B',
+    marginTop: 2,
+    fontWeight: '500',
   },
   tabLabelActive: {
-    color: COLORS.primaryDark,
+    color: '#1B2B5E',
     fontWeight: 'bold',
   },
 });

@@ -128,8 +128,10 @@ import FinalPaymentDueScreen from './screens/FinalPaymentDueScreen';
 import FinancialServicesScreen from './screens/FinancialServicesScreen';
 import HelpSupportScreen from './screens/HelpSupportScreen';
 import HomeScreen from './screens/HomeScreen';
+import InsuranceScreen from './screens/InsuranceScreen';
 import InvoiceScreen from './screens/InvoiceScreen';
 import LoginScreen from './screens/LoginScreen';
+import MarketingScreen from './screens/MarketingScreen';
 import MyDocumentsScreen from './screens/MyDocumentsScreen';
 import MyWorkScreen from './screens/MyWorkScreen';
 import NotificationsScreen from './screens/NotificationsScreen';
@@ -144,7 +146,9 @@ import ServiceCompletedScreen from './screens/ServiceCompletedScreen';
 import ServiceDetailScreen from './screens/ServiceDetailScreen';
 import ServicesScreen from './screens/ServicesScreen';
 import SplashScreen from './screens/SplashScreen';
+import TaxCompanyScreen from './screens/TaxCompanyScreen';
 import UploadDocumentsScreen from './screens/UploadDocumentsScreen';
+import WebServiceScreen from './screens/WebServiceScreen';
 import WorkProgressScreen from './screens/WorkProgressScreen';
 
 const Stack = createNativeStackNavigator();
@@ -174,17 +178,23 @@ export default function App() {
                           <Stack.Screen name="Login" component={LoginScreen} options={NO_BACK} />
                           <Stack.Screen name="OTP" component={OtpScreen} />
 
-                          {/* ---------- Main ---------- */}
-                          <Stack.Screen name="Home" component={HomeScreen} options={NO_BACK} />
-                          <Stack.Screen name="MyWork" component={MyWorkScreen} />
-                          <Stack.Screen name="Services" component={MyWorkScreen} />
+                          {/* ---------- 4 Main Navigation Tabs ---------- */}
+                          <Stack.Screen name="Home" component={TaxCompanyScreen} options={NO_BACK} />
+                          <Stack.Screen name="TaxCompany" component={TaxCompanyScreen} />
+                          <Stack.Screen name="Insurance" component={InsuranceScreen} />
+                          <Stack.Screen name="Marketing" component={MarketingScreen} />
+                          <Stack.Screen name="WebService" component={WebServiceScreen} />
+
+                          {/* ---------- Alias / Legacy Routes ---------- */}
+                          <Stack.Screen name="MyWork" component={TaxCompanyScreen} />
+                          <Stack.Screen name="Services" component={TaxCompanyScreen} />
                           <Stack.Screen name="ServiceDetail" component={ServiceDetailScreen} />
                           <Stack.Screen name="Pricing" component={PricingScreen} />
                           <Stack.Screen name="PricingScreen" component={PricingScreen} />
                           <Stack.Screen name="DSCPricing" component={PricingScreen} />
                           <Stack.Screen name="ISOPricing" component={PricingScreen} />
                           <Stack.Screen name="ChallanPricing" component={PricingScreen} />
-                          <Stack.Screen name="FinancialServices" component={FinancialServicesScreen} />
+                          <Stack.Screen name="FinancialServices" component={InsuranceScreen} />
 
                           {/* ---------- Payment ---------- */}
                           <Stack.Screen name="PaymentSummary" component={PaymentSummaryScreen} />
