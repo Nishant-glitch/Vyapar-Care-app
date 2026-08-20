@@ -1,11 +1,10 @@
-import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import React from 'react';
 import {
   FlatList,
   Linking,
   Platform,
   Pressable,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -17,48 +16,39 @@ import { FINANCIAL_SERVICES } from '../config/servicesHub';
 import { COLORS } from '../constants/theme';
 
 const PARTNER_COLORS = [
-  '#1B2B5E',
-  '#C5991A',
-  '#25D366',
-  '#E74C3C',
-  '#3498DB',
-  '#9B59B6',
-  '#D97706',
-  '#0284C7',
+  '#0284C7', // Sky blue
+  '#059669', // Emerald
+  '#C5991A', // Gold
+  '#7C3AED', // Purple
+  '#DC2626', // Red
 ];
 
 const getPartnerInitial = (name = '') => {
-  return name.trim().charAt(0).toUpperCase() || 'P';
+  return name.trim().charAt(0).toUpperCase() || 'I';
 };
 
 export default function FinancialServicesScreen() {
   const navigation = useNavigation();
-  const route = useRoute();
   const insets = useSafeAreaInsets();
 
-  const { defaultTab = 'credit_card' } = route.params || {};
+  // Extract insurance items from config or fallback
+  const insuranceCategory = FINANCIAL_SERVICES?.categories?.find(
+    (cat) => cat.id === 'insurance'
+  );
 
-  // Find initial tab index or fallback to first
-  const initialCategory = FINANCIAL_SERVICES.categories.find(
-    (cat) => cat.id === defaultTab
-  ) || FINANCIAL_SERVICES.categories[0];
-
-  const [activeCategoryId, setActiveCategoryId] = useState(initialCategory.id);
-
-  const activeCategory =
-    FINANCIAL_SERVICES.categories.find((cat) => cat.id === activeCategoryId) ||
-    FINANCIAL_SERVICES.categories[0];
+  const insuranceItems = insuranceCategory?.items || [
+    { id: 'two_wheeler_ins', name: 'Two Wheeler Insurance', partner: 'ProFin', type: 'insurance' },
+    { id: 'car_ins', name: 'Car Insurance', partner: 'ProFin', type: 'insurance' },
+    { id: 'health_ins', name: 'Health Insurance', partner: 'ProFin', type: 'insurance' },
+    { id: 'term_life_ins', name: 'Term Life Insurance', partner: 'ProFin', type: 'insurance' },
+    { id: 'investment_ins', name: 'Investment', partner: 'ProFin', type: 'insurance' },
+  ];
 
   const handleApplyProduct = async (product) => {
     console.log(`Applied for: [${product.name}] via ProFin`);
     const targetUrl = FINANCIAL_SERVICES.profinUrl || 'https://profin.gstsuvidhakendra.org.in';
     try {
-      const supported = await Linking.canOpenURL(targetUrl);
-      if (supported) {
-        await Linking.openURL(targetUrl);
-      } else {
-        await Linking.openURL(targetUrl);
-      }
+      await Linking.openURL(targetUrl);
     } catch (err) {
       console.warn('Could not open ProFin URL:', err);
     }
@@ -66,7 +56,7 @@ export default function FinancialServicesScreen() {
 
   const renderProductItem = ({ item, index }) => {
     const color = PARTNER_COLORS[index % PARTNER_COLORS.length];
-    const initial = getPartnerInitial(item.partner || item.name);
+    const initial = getPartnerInitial(item.name);
 
     return (
       <Pressable
@@ -83,11 +73,9 @@ export default function FinancialServicesScreen() {
         <View style={styles.productInfo}>
           <Text style={styles.productName}>{item.name}</Text>
           <View style={styles.partnerMetaRow}>
-            <Text style={styles.partnerName}>{item.partner}</Text>
+            <Text style={styles.partnerName}>{item.partner || 'ProFin'}</Text>
             <Text style={styles.partnerDot}>•</Text>
-            <Text style={styles.partnerTypeTag}>
-              {activeCategory.title}
-            </Text>
+            <Text style={styles.partnerTypeTag}>Insurance Plan</Text>
           </View>
         </View>
 
@@ -102,10 +90,10 @@ export default function FinancialServicesScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
-      <ScreenHeader title="Financial Services" />
+      <ScreenHeader title="Insurance Services" />
 
       <FlatList
-        data={activeCategory.items}
+        data={insuranceItems}
         keyExtractor={(item) => item.id}
         renderItem={renderProductItem}
         contentContainerStyle={[
@@ -119,17 +107,17 @@ export default function FinancialServicesScreen() {
             <View style={styles.bannerCard}>
               <View style={styles.bannerContent}>
                 <View style={styles.bannerIconCircle}>
-                  <Text style={styles.bannerIcon}>💳</Text>
+                  <Text style={styles.bannerIcon}>🛡️</Text>
                 </View>
                 <View style={styles.bannerTextWrap}>
                   <View style={styles.bannerTitleRow}>
-                    <Text style={styles.bannerTitle}>ProFin Partner Services</Text>
+                    <Text style={styles.bannerTitle}>Insurance Services</Text>
                     <View style={styles.verifiedBadge}>
                       <Text style={styles.verifiedText}>OFFICIAL</Text>
                     </View>
                   </View>
                   <Text style={styles.bannerSubtitle}>
-                    Credit Cards • Loans • Insurance • Banking
+                    Vehicle • Health • Life • Investment
                   </Text>
                   <Text style={styles.bannerPoweredBy}>
                     Powered by{' '}
@@ -139,58 +127,10 @@ export default function FinancialServicesScreen() {
               </View>
             </View>
 
-            {/* Category Tabs (Horizontal Scroll) */}
-            <View style={styles.tabsWrapper}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.tabsScrollContent}
-              >
-                {FINANCIAL_SERVICES.categories.map((cat) => {
-                  const isActive = cat.id === activeCategoryId;
-                  return (
-                    <Pressable
-                      key={cat.id}
-                      style={[
-                        styles.tabButton,
-                        isActive && styles.tabButtonActive,
-                      ]}
-                      onPress={() => setActiveCategoryId(cat.id)}
-                    >
-                      <Text style={styles.tabIcon}>{cat.icon}</Text>
-                      <Text
-                        style={[
-                          styles.tabTitle,
-                          isActive && styles.tabTitleActive,
-                        ]}
-                      >
-                        {cat.title}
-                      </Text>
-                      <View
-                        style={[
-                          styles.tabBadge,
-                          isActive && styles.tabBadgeActive,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.tabBadgeText,
-                            isActive && styles.tabBadgeTextActive,
-                          ]}
-                        >
-                          {cat.items.length}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            </View>
-
             {/* Products List Title Row */}
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionHeading}>
-                {activeCategory.title} Options ({activeCategory.items.length})
+                Available Insurance Plans ({insuranceItems.length})
               </Text>
               <Text style={styles.instantApplyPill}>⚡ Instant Online Apply</Text>
             </View>
@@ -205,10 +145,10 @@ export default function FinancialServicesScreen() {
                 <Text style={styles.disclaimerHeading}>Partner Disclaimer & Terms</Text>
               </View>
               <Text style={styles.disclaimerText}>
-                Financial products are provided by respective banks and NBFCs through the ProFin
-                platform. Vyapar Care Consultancy acts as a referral partner. All terms, conditions,
-                interest rates, and eligibility criteria are determined solely by the respective
-                financial institutions.
+                Insurance and financial products are provided by respective insurance companies and
+                financial institutions through the ProFin platform. Vyapar Care Consultancy acts as
+                a referral partner. All terms, policy coverage, and premium rates are determined
+                solely by the respective insurers.
               </Text>
             </View>
           </View>
@@ -253,7 +193,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: '#1B2B5E10',
+    backgroundColor: '#ECFDF5',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -302,59 +242,6 @@ const styles = StyleSheet.create({
   bannerLink: {
     color: '#0284C7',
     fontWeight: '600',
-  },
-  tabsWrapper: {
-    marginBottom: 14,
-  },
-  tabsScrollContent: {
-    paddingVertical: 4,
-    gap: 8,
-  },
-  tabButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    marginRight: 6,
-  },
-  tabButtonActive: {
-    backgroundColor: '#1B2B5E',
-    borderColor: '#1B2B5E',
-  },
-  tabIcon: {
-    fontSize: 14,
-    marginRight: 6,
-  },
-  tabTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1B2B5E',
-    marginRight: 6,
-  },
-  tabTitleActive: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  tabBadge: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 10,
-  },
-  tabBadgeActive: {
-    backgroundColor: '#C5991A',
-  },
-  tabBadgeText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#475569',
-  },
-  tabBadgeTextActive: {
-    color: '#FFFFFF',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
