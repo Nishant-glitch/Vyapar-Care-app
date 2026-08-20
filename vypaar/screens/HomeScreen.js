@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import {
   Alert,
   Dimensions,
+  Image,
   Linking,
   Platform,
   Pressable,
@@ -179,6 +180,7 @@ export default function HomeScreen() {
   const userName = displayUser.name || displayUser.full_name || 'Ravi Kumar';
   const initial = userName.charAt(0).toUpperCase();
   const customerId = displayUser.customer_id || 'VCC2505181';
+  const profilePhoto = profile?.profile_photo || profile?.avatar_url || null;
 
   const handleQuickAction = (item) => {
     if (item.action === 'formats') {
@@ -234,15 +236,21 @@ export default function HomeScreen() {
             <View style={styles.bellBadge} />
           </Pressable>
 
-          {/* Profile Avatar (Tappable -> Opens Profile Drawer) */}
+          {/* Profile Avatar (Tappable -> Navigates to Profile, Long Press -> Tooltip) */}
           <Pressable
             style={({ pressed }) => [
               styles.avatarCircle,
               pressed && styles.pressed,
             ]}
-            onPress={() => setProfileModalVisible(true)}
+            onPress={() => navigation.navigate('Profile')}
+            onLongPress={() => Alert.alert('Profile', 'View & Edit Profile')}
+            hitSlop={8}
           >
-            <Text style={styles.avatarText}>{initial}</Text>
+            {profilePhoto ? (
+              <Image source={{ uri: profilePhoto }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarText}>{initial}</Text>
+            )}
           </Pressable>
         </View>
       </View>
@@ -703,16 +711,23 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#C5991A',
+    backgroundColor: '#1B2B5E',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#C5991A',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
+    resizeMode: 'cover',
   },
   avatarText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1B2B5E',
+    color: '#DFB53B',
   },
 
   /* 2x2 Stats Grid */

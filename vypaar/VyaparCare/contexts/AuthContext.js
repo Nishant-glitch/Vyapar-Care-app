@@ -7,12 +7,33 @@ const AuthContext = createContext({
   profile: null,
   loading: true,
   signOut: async () => {},
+  refreshProfile: async () => {},
+  updateProfile: async () => {},
 });
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const fetchProfile = async (userId) => {
+    if (!isSupabaseConfigured || !userId) return;
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.log('Profile fetch error:', error.message);
+      } else if (data) {
+        setProfile(data);
+      }
+    } catch (e) {
+      console.log('Error in fetchProfile:', e);
+    }
+  };
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -41,29 +62,35 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // session milte hi public.users se profile (naam, customer_id) le aao
+  // session milte hi public.users se profile (naam, customer_id, profile_photo) le aao
   useEffect(() => {
     if (!isSupabaseConfigured || !session?.user?.id) {
       setProfile(null);
       return;
     }
 
-    let active = true;
-    supabase
-      .from('users')
-      .select('*')
-      .eq('id', session.user.id)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (!active) return;
-        if (error) console.log('Profile fetch error:', error.message);
-        setProfile(data ?? null);
-      });
-
-    return () => {
-      active = false;
-    };
+    fetchProfile(session.user.id);
   }, [session?.user?.id]);
+
+  const refreshProfile = async () => {
+    if (session?.user?.id) {
+      await fetchProfile(session.user.id);
+    }
+  };
+
+  const updateProfile = async (updates) => {
+    setProfile((prev) => ({ ...prev, ...updates }));
+    if (isSupabaseConfigured && session?.user?.id) {
+      try {
+        await supabase
+          .from('users')
+          .update(updates)
+          .eq('id', session.user.id);
+      } catch (err) {
+        console.warn('Could not sync profile to Supabase:', err);
+      }
+    }
+  };
 
   const value = useMemo(
     () => ({
@@ -71,6 +98,8 @@ export function AuthProvider({ children }) {
       user: session?.user ?? null,
       profile,
       loading,
+      refreshProfile,
+      updateProfile,
       signOut: async () => {
         if (isSupabaseConfigured) await supabase.auth.signOut();
         setSession(null);

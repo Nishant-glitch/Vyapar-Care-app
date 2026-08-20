@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LogoBadge } from './BrandLogo';
 import { COLORS } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,8 +9,17 @@ export default function AppTopBar({ title = 'Vyapar Care', onOpenProfile }) {
   const navigation = useNavigation();
   const { profile, user } = useAuth();
 
-  const userName = profile?.full_name || user?.email?.split('@')[0] || 'Ravi Kumar';
+  const userName = profile?.name || profile?.full_name || user?.email?.split('@')[0] || 'Ravi Kumar';
   const initial = userName.charAt(0).toUpperCase();
+  const profilePhoto = profile?.profile_photo || profile?.avatar_url || null;
+
+  const handleAvatarPress = () => {
+    if (onOpenProfile) {
+      onOpenProfile();
+    } else {
+      navigation.navigate('Profile');
+    }
+  };
 
   return (
     <View style={styles.topBarContainer}>
@@ -25,7 +34,7 @@ export default function AppTopBar({ title = 'Vyapar Care', onOpenProfile }) {
         </View>
       </View>
 
-      {/* Center: Title / Current Tab (Optional or condensed) */}
+      {/* Center: Title / Current Tab */}
       <View style={styles.centerSection}>
         <Text style={styles.tabHeading} numberOfLines={1}>
           {title}
@@ -52,10 +61,16 @@ export default function AppTopBar({ title = 'Vyapar Care', onOpenProfile }) {
             styles.avatarButton,
             pressed && styles.buttonPressed,
           ]}
-          onPress={onOpenProfile}
+          onPress={handleAvatarPress}
+          onLongPress={() => Alert.alert('Profile', 'View & Edit Profile')}
+          hitSlop={8}
         >
-          <Text style={styles.avatarInitial}>{initial}</Text>
-        </View>
+          {profilePhoto ? (
+            <Image source={{ uri: profilePhoto }} style={styles.avatarImage} />
+          ) : (
+            <Text style={styles.avatarInitial}>{initial}</Text>
+          )}
+        </Pressable>
       </View>
     </View>
   );
@@ -135,16 +150,23 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#C5991A',
+    backgroundColor: '#1B2B5E',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#C5991A',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 18,
+    resizeMode: 'cover',
   },
   avatarInitial: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1B2B5E',
+    color: '#DFB53B',
   },
   buttonPressed: {
     opacity: 0.8,

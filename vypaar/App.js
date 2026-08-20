@@ -142,6 +142,7 @@ import PaymentHistoryScreen from './screens/PaymentHistoryScreen';
 import PaymentSuccessScreen from './screens/PaymentSuccessScreen';
 import PaymentSummaryScreen from './screens/PaymentSummaryScreen';
 import PricingScreen from './screens/PricingScreen';
+import ProfileScreen from './screens/ProfileScreen';
 import ServiceCompletedScreen from './screens/ServiceCompletedScreen';
 import ServiceDetailScreen from './screens/ServiceDetailScreen';
 import ServicesScreen from './screens/ServicesScreen';
@@ -177,6 +178,9 @@ export default function App() {
                           <Stack.Screen name="Splash" component={SplashScreen} options={NO_BACK} />
                           <Stack.Screen name="Login" component={LoginScreen} options={NO_BACK} />
                           <Stack.Screen name="OTP" component={OtpScreen} />
+
+                          {/* ---------- Profile & User Details ---------- */}
+                          <Stack.Screen name="Profile" component={ProfileScreen} />
 
                           {/* ---------- 5 Main Navigation Tabs ---------- */}
                           <Stack.Screen name="Dashboard" component={HomeScreen} options={NO_BACK} />
