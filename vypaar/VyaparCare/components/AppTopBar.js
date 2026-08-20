@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LogoBadge } from './BrandLogo';
 import { COLORS } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
@@ -22,68 +23,78 @@ export default function AppTopBar({ title = 'Vyapar Care', onOpenProfile }) {
   };
 
   return (
-    <View style={styles.topBarContainer}>
-      {/* Left: VC Logo + Brand */}
-      <View style={styles.leftSection}>
-        <View style={styles.logoWrap}>
-          <LogoBadge size={30} showFlourishes={false} />
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <View style={styles.topBarContainer}>
+        {/* Left: VC Logo + Brand */}
+        <View style={styles.leftSection}>
+          <View style={styles.logoWrap}>
+            <LogoBadge size={28} showFlourishes={false} />
+          </View>
+          <View>
+            <Text style={styles.brandTitle}>Vyapar Care</Text>
+            <Text style={styles.brandSubtitle}>Compliance Hub</Text>
+          </View>
         </View>
-        <View>
-          <Text style={styles.brandTitle}>Vyapar Care</Text>
-          <Text style={styles.brandSubtitle}>Compliance Hub</Text>
+
+        {/* Center: Title / Current Tab */}
+        <View style={styles.centerSection}>
+          <Text style={styles.tabHeading} numberOfLines={1}>
+            {title}
+          </Text>
+        </View>
+
+        {/* Right: Notifications + Profile Avatar */}
+        <View style={styles.rightSection}>
+          {/* Notification Bell */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.iconButton,
+              pressed && styles.buttonPressed,
+            ]}
+            onPress={() => navigation.navigate('Notifications')}
+            accessibilityLabel="Notifications"
+            accessibilityRole="button"
+          >
+            <Text style={styles.bellIcon}>🔔</Text>
+            <View style={styles.badgeDot} />
+          </Pressable>
+
+          {/* Profile Avatar */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.avatarButton,
+              pressed && styles.buttonPressed,
+            ]}
+            onPress={handleAvatarPress}
+            onLongPress={() => Alert.alert('Profile', 'View & Edit Profile')}
+            hitSlop={8}
+            accessibilityLabel="Profile"
+            accessibilityRole="button"
+          >
+            {profilePhoto ? (
+              <Image source={{ uri: profilePhoto }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarInitial}>{initial}</Text>
+            )}
+          </Pressable>
         </View>
       </View>
-
-      {/* Center: Title / Current Tab */}
-      <View style={styles.centerSection}>
-        <Text style={styles.tabHeading} numberOfLines={1}>
-          {title}
-        </Text>
-      </View>
-
-      {/* Right: Notifications + Profile Avatar */}
-      <View style={styles.rightSection}>
-        {/* Notification Bell */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.iconButton,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={() => navigation.navigate('Notifications')}
-        >
-          <Text style={styles.bellIcon}>🔔</Text>
-          <View style={styles.badgeDot} />
-        </Pressable>
-
-        {/* Profile Avatar */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.avatarButton,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handleAvatarPress}
-          onLongPress={() => Alert.alert('Profile', 'View & Edit Profile')}
-          hitSlop={8}
-        >
-          {profilePhoto ? (
-            <Image source={{ uri: profilePhoto }} style={styles.avatarImage} />
-          ) : (
-            <Text style={styles.avatarInitial}>{initial}</Text>
-          )}
-        </Pressable>
-      </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    backgroundColor: '#1B2B5E',
+  },
   topBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#1B2B5E',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingTop: 6,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#2A3C72',
   },

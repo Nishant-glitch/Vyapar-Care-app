@@ -148,19 +148,20 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#1B2B5E' }} edges={['left', 'right', 'top']}>
-      <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
-        {/* Top Header */}
-      <View style={styles.headerRow}>
-        <Pressable
-          style={({ pressed }) => [styles.backBtn, pressed && styles.btnPressed]}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backBtnText}>←</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>My Profile</Text>
-        <View style={{ width: 40 }} />
-      </View>
+    <View style={styles.container}>
+      {/* Top Header */}
+      <SafeAreaView edges={['top']} style={{ backgroundColor: '#1B2B5E' }}>
+        <View style={styles.headerRow}>
+          <Pressable
+            style={({ pressed }) => [styles.backBtn, pressed && styles.btnPressed]}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backBtnText}>←</Text>
+          </Pressable>
+          <Text style={styles.headerTitle}>My Profile</Text>
+          <View style={{ width: 40 }} />
+        </View>
+      </SafeAreaView>
 
       <ScrollView
         style={styles.flex}
@@ -302,8 +303,7 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </ScrollView>
-      </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -321,7 +321,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#1B2B5E',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 6,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A3C72',
   },
   backBtn: {
     width: 40,

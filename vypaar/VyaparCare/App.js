@@ -162,7 +162,6 @@ export default function App() {
   return (
     <SafeAreaProvider style={{ flex: 1, backgroundColor: '#1B2B5E' }}>
       <StatusBar barStyle="light-content" backgroundColor="#1B2B5E" />
-      <SafeAreaView style={{ flex: 0, backgroundColor: '#1B2B5E' }} />
       <View style={{ flex: 1, backgroundColor: '#1B2B5E' }}>
         <AuthProvider>
           <PLCFormProvider>

@@ -165,9 +165,8 @@ export default function TaxCompanyScreen() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#1B2B5E' }} edges={['left', 'right', 'top']}>
-      <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
-        {/* Persistent App Top Bar */}
+    <View style={styles.container}>
+      {/* Persistent App Top Bar */}
       <AppTopBar
         title="Tax & Company Services"
         onOpenProfile={() => setProfileModalVisible(true)}
@@ -319,8 +318,7 @@ export default function TaxCompanyScreen() {
 
       {/* Persistent Bottom Navigation */}
       <BottomNav activeTab="Tax/Acc/Company" />
-      </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

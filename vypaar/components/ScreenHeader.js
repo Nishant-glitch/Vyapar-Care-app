@@ -1,12 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/theme';
 
 /**
  * Global ScreenHeader Component
- * - Navy #1B2B5E theme by default for seamless status bar + header integration
+ * - Wraps in SafeAreaView edges={['top']} for natural notch padding with zero extra manual offset
  * - Left side: Back arrow icon (←) Pressable (hidden when showBack=false)
  * - Center: Centered screen title in bold white text
  * - Right: Balanced placeholder or optional rightElement
@@ -19,7 +19,6 @@ export default function ScreenHeader({
   rightElement,
   theme = 'navy',
 }) {
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 
   const handleBack = () => {
@@ -36,73 +35,72 @@ export default function ScreenHeader({
   const isLight = theme === 'light';
 
   return (
-    <View
-      style={[
-        styles.header,
-        isLight ? styles.headerLight : styles.headerNavy,
-        { paddingTop: Math.max(insets.top, 10) + 6 },
-      ]}
+    <SafeAreaView
+      edges={['top']}
+      style={isLight ? styles.safeAreaLight : styles.safeAreaNavy}
     >
-      {/* Left Back Button or Placeholder */}
-      {showBack ? (
-        <Pressable
-          style={({ pressed }) => [
-            styles.backButton,
-            isLight ? styles.backButtonLight : styles.backButtonNavy,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handleBack}
-          hitSlop={12}
-          accessibilityLabel="Go back"
-          accessibilityRole="button"
+      <View style={styles.headerInner}>
+        {/* Left Back Button or Placeholder */}
+        {showBack ? (
+          <Pressable
+            style={({ pressed }) => [
+              styles.backButton,
+              isLight ? styles.backButtonLight : styles.backButtonNavy,
+              pressed && styles.buttonPressed,
+            ]}
+            onPress={handleBack}
+            hitSlop={12}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
+            <Text style={[styles.backIcon, isLight ? styles.backIconLight : styles.backIconNavy]}>
+              ←
+            </Text>
+          </Pressable>
+        ) : (
+          <View style={styles.backButtonPlaceholder} />
+        )}
+
+        {/* Center Title */}
+        <Text
+          style={[styles.title, isLight ? styles.titleLight : styles.titleNavy]}
+          numberOfLines={1}
         >
-          <Text style={[styles.backIcon, isLight ? styles.backIconLight : styles.backIconNavy]}>
-            ←
-          </Text>
-        </Pressable>
-      ) : (
-        <View style={styles.backButtonPlaceholder} />
-      )}
+          {title}
+        </Text>
 
-      {/* Center Title */}
-      <Text
-        style={[styles.title, isLight ? styles.titleLight : styles.titleNavy]}
-        numberOfLines={1}
-      >
-        {title}
-      </Text>
-
-      {/* Right Element or Spacing Placeholder */}
-      {rightElement ? (
-        <View style={styles.rightWrap}>{rightElement}</View>
-      ) : (
-        <View style={styles.backButtonPlaceholder} />
-      )}
-    </View>
+        {/* Right Element or Spacing Placeholder */}
+        {rightElement ? (
+          <View style={styles.rightWrap}>{rightElement}</View>
+        ) : (
+          <View style={styles.backButtonPlaceholder} />
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
+  safeAreaNavy: {
+    backgroundColor: '#1B2B5E',
+  },
+  safeAreaLight: {
+    backgroundColor: COLORS.white,
+  },
+  headerInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingBottom: 12,
+    paddingTop: 6,
+    paddingBottom: 10,
     borderBottomWidth: 1,
-  },
-  headerNavy: {
-    backgroundColor: '#1B2B5E',
     borderBottomColor: '#2A3C72',
   },
-  headerLight: {
-    backgroundColor: COLORS.white,
-    borderBottomColor: '#F1F5F9',
-  },
   backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -141,12 +139,12 @@ const styles = StyleSheet.create({
     color: '#1B2B5E',
   },
   backButtonPlaceholder: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
   },
   rightWrap: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -206,14 +206,13 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#1B2B5E' }} edges={['left', 'right', 'top']}>
-      <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
-
+    <View style={styles.container}>
       {/* ========================================================================= */}
       {/* 1. HEADER (Navy #1B2B5E, rounded bottom, greetings, bell, avatar)          */}
       {/* ========================================================================= */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
+      <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
           <Text style={styles.greeting}>Namaste,</Text>
           <Text style={styles.userName} numberOfLines={1}>
             {userName} 👋
@@ -254,6 +253,7 @@ export default function HomeScreen() {
           </Pressable>
         </View>
       </View>
+    </SafeAreaView>
 
       {/* Main Scroll Content */}
       <ScrollView
@@ -611,8 +611,7 @@ export default function HomeScreen() {
 
       {/* Persistent 5-Tab Navigation Bar */}
       <BottomNav activeTab="Dashboard" />
-      </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -633,21 +632,26 @@ const styles = StyleSheet.create({
   },
 
   /* Header */
-  header: {
+  headerSafeArea: {
     backgroundColor: '#1B2B5E',
-    paddingHorizontal: 18,
-    paddingTop: 12,
-    paddingBottom: 18,
     borderBottomLeftRadius: 22,
     borderBottomRightRadius: 22,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     shadowColor: '#1B2B5E',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 6,
+  },
+  header: {
+    backgroundColor: '#1B2B5E',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
+    borderBottomLeftRadius: 22,
+    borderBottomRightRadius: 22,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   headerLeft: {
     flex: 1,
