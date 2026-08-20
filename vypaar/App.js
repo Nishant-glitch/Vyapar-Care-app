@@ -178,8 +178,9 @@ export default function App() {
                           <Stack.Screen name="Login" component={LoginScreen} options={NO_BACK} />
                           <Stack.Screen name="OTP" component={OtpScreen} />
 
-                          {/* ---------- 4 Main Navigation Tabs ---------- */}
-                          <Stack.Screen name="Home" component={TaxCompanyScreen} options={NO_BACK} />
+                          {/* ---------- 5 Main Navigation Tabs ---------- */}
+                          <Stack.Screen name="Dashboard" component={HomeScreen} options={NO_BACK} />
+                          <Stack.Screen name="Home" component={HomeScreen} options={NO_BACK} />
                           <Stack.Screen name="TaxCompany" component={TaxCompanyScreen} />
                           <Stack.Screen name="Insurance" component={InsuranceScreen} />
                           <Stack.Screen name="Marketing" component={MarketingScreen} />

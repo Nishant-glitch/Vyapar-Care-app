@@ -180,7 +180,7 @@ export default function HomeScreen({ navigation }) {
         ) : null}
       </ScrollView>
 
-      <BottomNav activeTab="Home" />
+      <BottomNav activeTab="Dashboard" />
     </SafeAreaView>
   );
 }

@@ -55,7 +55,7 @@ export default function AppTopBar({ title = 'Vyapar Care', onOpenProfile }) {
           onPress={onOpenProfile}
         >
           <Text style={styles.avatarInitial}>{initial}</Text>
-        </View>
+        </Pressable>
       </View>
     </View>
   );

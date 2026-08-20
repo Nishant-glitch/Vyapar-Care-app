@@ -12,10 +12,9 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomNav from '../components/BottomNav';
 import { ErrorState, LoadingState } from '../components/StateViews';
-import { getApplicationStatus } from '../config/gstDocumentConfig';
 import { COLORS } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
-import { formatDate, formatDateTime, getGSTApplications, getHomeSummary } from '../lib/database';
+import { formatDateTime, getHomeSummary } from '../lib/database';
 import { formatINR } from '../utils/currency';
 import { useFetch } from '../hooks/useFetch';
 
@@ -60,15 +59,6 @@ export default function HomeScreen({ navigation }) {
     demoData: DEMO_SUMMARY,
     enabled: !!user?.id,
   });
-
-  // GST applications — koi na ho to section chhup jaata hai
-  const { data: gstApplications } = useFetch(
-    () => getGSTApplications(user.id),
-    [user?.id],
-    { demoData: [], enabled: !!user?.id }
-  );
-
-  const applications = gstApplications || [];
 
   const onRefresh = () => {
     console.log('Refreshing...');
@@ -162,43 +152,6 @@ export default function HomeScreen({ navigation }) {
           />
         </View>
 
-        {/* ---------- GST applications ---------- */}
-        {applications.length > 0 ? (
-          <View style={styles.gstBlock}>
-            <View style={styles.gstHeader}>
-              <Text style={styles.gstHeading}>My GST Applications</Text>
-              <Pressable onPress={() => navigation.navigate('GSTAdmin')} hitSlop={8}>
-                <Text style={styles.gstViewAll}>View All</Text>
-              </Pressable>
-            </View>
-
-            {/* sirf latest 3 — poori list GSTAdmin pe hai */}
-            {applications.slice(0, 3).map((app) => {
-              const status = getApplicationStatus(app.status);
-              return (
-                <Pressable
-                  key={app.id}
-                  style={({ pressed }) => [styles.gstCard, pressed && styles.pressed]}
-                  onPress={() => {
-                    console.log(`Open GST application ${app.application_id}`);
-                    navigation.navigate('GSTAdmin', { applicationId: app.application_id });
-                  }}
-                >
-                  <View style={styles.gstCardTop}>
-                    <Text style={styles.gstAppId}>{app.application_id}</Text>
-                    <View style={[styles.gstBadge, { backgroundColor: `${status.color}22` }]}>
-                      <Text style={[styles.gstBadgeText, { color: status.color }]}>
-                        {status.label}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text style={styles.gstDate}>{formatDate(app.created_at)}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        ) : null}
-
         {/* ---------- today's update ---------- */}
         <Pressable
           style={({ pressed }) => [styles.updateCard, pressed && styles.pressed]}
@@ -227,7 +180,7 @@ export default function HomeScreen({ navigation }) {
         ) : null}
       </ScrollView>
 
-      <BottomNav activeTab="Home" />
+      <BottomNav activeTab="Dashboard" />
     </SafeAreaView>
   );
 }
@@ -376,70 +329,6 @@ const styles = StyleSheet.create({
   },
 
   /* today's update */
-  /* GST applications */
-  gstBlock: {
-    marginTop: 16,
-  },
-  gstHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  gstHeading: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.primaryDark,
-  },
-  gstViewAll: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: COLORS.gold,
-  },
-  gstCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 8,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-      android: { elevation: 1 },
-      default: {},
-    }),
-  },
-  gstCardTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  gstAppId: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: COLORS.primaryDark,
-    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
-  },
-  gstBadge: {
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    marginLeft: 8,
-  },
-  gstBadgeText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  gstDate: {
-    fontSize: 11,
-    color: COLORS.grayText,
-    marginTop: 6,
-  },
-
   updateCard: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
