@@ -7,7 +7,7 @@ import { COLORS } from '../constants/theme';
 // tab -> stack route. Profile ka screen abhi banaya nahi hai (route: null)
 export const TABS = [
   { key: 'Home', icon: '🏠', label: 'Home', route: 'Home' },
-  { key: 'My Work', icon: '📋', label: 'My Work', route: 'Services' },
+  { key: 'My Work', icon: '📋', label: 'My Work', route: 'MyWork' },
   { key: 'Payment', icon: '💳', label: 'Payment', route: 'PaymentHistory' },
   { key: 'Documents', icon: '📄', label: 'Documents', route: 'UploadDocuments' },
   { key: 'Profile', icon: '👤', label: 'Profile', route: null },

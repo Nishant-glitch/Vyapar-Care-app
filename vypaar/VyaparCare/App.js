@@ -130,6 +130,7 @@ import HomeScreen from './screens/HomeScreen';
 import InvoiceScreen from './screens/InvoiceScreen';
 import LoginScreen from './screens/LoginScreen';
 import MyDocumentsScreen from './screens/MyDocumentsScreen';
+import MyWorkScreen from './screens/MyWorkScreen';
 import NotificationsScreen from './screens/NotificationsScreen';
 import OrderConfirmationScreen from './screens/OrderConfirmationScreen';
 import OtpScreen from './screens/OtpScreen';
@@ -137,6 +138,7 @@ import PaymentGatewayScreen from './screens/PaymentGatewayScreen';
 import PaymentHistoryScreen from './screens/PaymentHistoryScreen';
 import PaymentSuccessScreen from './screens/PaymentSuccessScreen';
 import PaymentSummaryScreen from './screens/PaymentSummaryScreen';
+import PricingScreen from './screens/PricingScreen';
 import ServiceCompletedScreen from './screens/ServiceCompletedScreen';
 import ServiceDetailScreen from './screens/ServiceDetailScreen';
 import ServicesScreen from './screens/ServicesScreen';
@@ -173,8 +175,14 @@ export default function App() {
 
                           {/* ---------- Main ---------- */}
                           <Stack.Screen name="Home" component={HomeScreen} options={NO_BACK} />
-                          <Stack.Screen name="Services" component={ServicesScreen} />
+                          <Stack.Screen name="MyWork" component={MyWorkScreen} />
+                          <Stack.Screen name="Services" component={MyWorkScreen} />
                           <Stack.Screen name="ServiceDetail" component={ServiceDetailScreen} />
+                          <Stack.Screen name="Pricing" component={PricingScreen} />
+                          <Stack.Screen name="PricingScreen" component={PricingScreen} />
+                          <Stack.Screen name="DSCPricing" component={PricingScreen} />
+                          <Stack.Screen name="ISOPricing" component={PricingScreen} />
+                          <Stack.Screen name="ChallanPricing" component={PricingScreen} />
 
                           {/* ---------- Payment ---------- */}
                           <Stack.Screen name="PaymentSummary" component={PaymentSummaryScreen} />
