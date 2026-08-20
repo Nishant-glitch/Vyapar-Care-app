@@ -328,76 +328,45 @@ export default function MyWorkScreen() {
         </View>
 
         {/* ========================================================================= */}
-        {/* SECTION 3: FINANCIAL & INSURANCE SERVICES (PROFIN PORTAL)                  */}
+        {/* SECTION 3: INSURANCE SERVICES (PROFIN PORTAL)                             */}
         {/* ========================================================================= */}
         <View style={[styles.sectionHeaderWrap, { marginTop: 24 }]}>
-          <Text style={styles.sectionHeading}>Financial & Insurance Services</Text>
-          <Text style={styles.sectionSub}>Credit Cards, Loans, Savings & Insurance by ProFin</Text>
+          <Text style={styles.sectionHeading}>Insurance Services</Text>
+          <Text style={styles.sectionSub}>Vehicle, Health, Life & Investment Plans by ProFin</Text>
         </View>
 
-        <View style={styles.directGrid}>
-          {/* Card 1: Financial Services (Credit Cards, Loans, Savings) */}
-          <Pressable
-            style={({ pressed }) => [
-              styles.directCard,
-              styles.financialCard,
-              pressed && styles.cardPressed,
-            ]}
-            onPress={() =>
-              navigation.navigate('FinancialServices', { defaultTab: 'credit_card' })
-            }
-          >
-            <View style={styles.directTopRow}>
-              <View style={[styles.directIconCircle, { backgroundColor: '#EFF6FF' }]}>
-                <Text style={styles.directIcon}>💳</Text>
-              </View>
-              <View style={[styles.directBadgePill, { backgroundColor: '#DBEAFE' }]}>
-                <Text style={[styles.directBadgeText, { color: '#1E40AF' }]}>19 products</Text>
-              </View>
+        <Pressable
+          style={({ pressed }) => [
+            styles.insuranceFullCard,
+            pressed && styles.cardPressed,
+          ]}
+          onPress={() =>
+            navigation.navigate('FinancialServices', { defaultTab: 'insurance' })
+          }
+        >
+          <View style={styles.insuranceCardContent}>
+            <View style={[styles.directIconCircle, { backgroundColor: '#ECFDF5', width: 44, height: 44, borderRadius: 22 }]}>
+              <Text style={{ fontSize: 22 }}>🛡️</Text>
             </View>
 
-            <Text style={styles.directTitle}>Financial Services</Text>
-            <Text style={styles.directSubtitle} numberOfLines={2}>
-              Credit Cards, Personal Loans, Savings Account
-            </Text>
-
-            <View style={styles.directBottomRow}>
-              <Text style={styles.viewPlansText}>Explore 19 Options</Text>
-              <Text style={styles.viewPlansArrow}>→</Text>
-            </View>
-          </Pressable>
-
-          {/* Card 2: Insurance Services */}
-          <Pressable
-            style={({ pressed }) => [
-              styles.directCard,
-              styles.financialCard,
-              pressed && styles.cardPressed,
-            ]}
-            onPress={() =>
-              navigation.navigate('FinancialServices', { defaultTab: 'insurance' })
-            }
-          >
-            <View style={styles.directTopRow}>
-              <View style={[styles.directIconCircle, { backgroundColor: '#ECFDF5' }]}>
-                <Text style={styles.directIcon}>🛡️</Text>
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                <Text style={styles.directTitle}>Insurance Services</Text>
+                <View style={[styles.directBadgePill, { backgroundColor: '#D1FAE5' }]}>
+                  <Text style={[styles.directBadgeText, { color: '#065F46' }]}>5 products</Text>
+                </View>
               </View>
-              <View style={[styles.directBadgePill, { backgroundColor: '#D1FAE5' }]}>
-                <Text style={[styles.directBadgeText, { color: '#065F46' }]}>5 products</Text>
-              </View>
+              <Text style={styles.directSubtitle} numberOfLines={2}>
+                Two-Wheeler, Car, Health, Term Life & Investment Plans
+              </Text>
             </View>
+          </View>
 
-            <Text style={styles.directTitle}>Insurance Services</Text>
-            <Text style={styles.directSubtitle} numberOfLines={2}>
-              Vehicle, Health, Life & Investment Plans
-            </Text>
-
-            <View style={styles.directBottomRow}>
-              <Text style={styles.viewPlansText}>Explore 5 Plans</Text>
-              <Text style={styles.viewPlansArrow}>→</Text>
-            </View>
-          </Pressable>
-        </View>
+          <View style={[styles.directBottomRow, { marginTop: 6 }]}>
+            <Text style={styles.viewPlansText}>Explore 5 Insurance Plans</Text>
+            <Text style={styles.viewPlansArrow}>→</Text>
+          </View>
+        </Pressable>
 
         {/* ========================================================================= */}
         {/* SECTION 4: CATEGORY 12 - ALL REQUIRED FORMATS                             */}
@@ -754,6 +723,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
+  },
+  insuranceFullCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderLeftWidth: 4,
+    borderLeftColor: '#C5991A',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  insuranceCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
   },
   directTopRow: {
     flexDirection: 'row',
