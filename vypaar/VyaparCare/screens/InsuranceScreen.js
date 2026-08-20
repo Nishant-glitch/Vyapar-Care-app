@@ -127,22 +127,6 @@ export default function InsuranceScreen() {
         }
         ListHeaderComponent={
           <View style={styles.headerSection}>
-            {/* Hero Banner: Protect What Matters */}
-            <View style={styles.heroBanner}>
-              <View style={styles.heroLeft}>
-                <View style={styles.shieldPill}>
-                  <Text style={styles.shieldPillText}>🛡️ 100% SECURE & CASHLESS</Text>
-                </View>
-                <Text style={styles.heroTitle}>Protect What Matters</Text>
-                <Text style={styles.heroDesc}>
-                  Instant motor, health, term life & high-yield investment policies with maximum tax savings.
-                </Text>
-              </View>
-              <View style={styles.heroEmblem}>
-                <Text style={styles.heroEmblemText}>🛡️</Text>
-              </View>
-            </View>
-
             {/* Section Header */}
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionHeading}>

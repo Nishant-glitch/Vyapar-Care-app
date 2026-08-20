@@ -194,20 +194,6 @@ export default function TaxCompanyScreen() {
         }
         ListHeaderComponent={
           <View style={styles.headerSection}>
-            {/* Hero Card / Banner */}
-            <View style={styles.heroBanner}>
-              <View style={styles.heroLeft}>
-                <Text style={styles.heroSubtitle}>GOVERNMENT & CA COMPLIANCE</Text>
-                <Text style={styles.heroTitle}>Business & Tax Services</Text>
-                <Text style={styles.heroDesc}>
-                  GST, ROC, Income Tax, Trademark & Company filings handled by experts.
-                </Text>
-              </View>
-              <View style={styles.heroEmblem}>
-                <Text style={styles.heroEmblemText}>💼</Text>
-              </View>
-            </View>
-
             {/* Search Bar */}
             <View style={styles.searchBar}>
               <Text style={styles.searchIcon}>🔍</Text>

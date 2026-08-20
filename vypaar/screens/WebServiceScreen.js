@@ -123,22 +123,6 @@ export default function WebServiceScreen() {
         }
         ListHeaderComponent={
           <View style={styles.headerSection}>
-            {/* Hero Banner */}
-            <View style={styles.heroBanner}>
-              <View style={styles.heroLeft}>
-                <View style={styles.badgePill}>
-                  <Text style={styles.badgePillText}>🌐 DIGITAL TRANSFORMATION</Text>
-                </View>
-                <Text style={styles.heroTitle}>Web & Digital Services</Text>
-                <Text style={styles.heroDesc}>
-                  Websites, iOS/Android mobile apps, e-commerce, custom ERP software & business emails.
-                </Text>
-              </View>
-              <View style={styles.heroEmblem}>
-                <Text style={styles.heroEmblemText}>🌐</Text>
-              </View>
-            </View>
-
             {/* Section Header Row */}
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionHeading}>
