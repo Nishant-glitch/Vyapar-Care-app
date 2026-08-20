@@ -3,9 +3,13 @@ import React from 'react';
 import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LogoBadge } from './BrandLogo';
-import { COLORS } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
 
+/**
+ * Universal AppTopBar Component
+ * Layout (left to right):
+ * [VC Logo icon] [Page Title text - bold, white, 18px] -------- [Bell] [Avatar]
+ */
 export default function AppTopBar({ title = 'Vyapar Care', onOpenProfile }) {
   const navigation = useNavigation();
   const { profile, user } = useAuth();
@@ -25,20 +29,12 @@ export default function AppTopBar({ title = 'Vyapar Care', onOpenProfile }) {
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <View style={styles.topBarContainer}>
-        {/* Left: VC Logo + Brand */}
+        {/* Left: VC Logo + Current Page Title */}
         <View style={styles.leftSection}>
           <View style={styles.logoWrap}>
-            <LogoBadge size={28} showFlourishes={false} />
+            <LogoBadge size={30} showFlourishes={false} />
           </View>
-          <View>
-            <Text style={styles.brandTitle}>Vyapar Care</Text>
-            <Text style={styles.brandSubtitle}>Compliance Hub</Text>
-          </View>
-        </View>
-
-        {/* Center: Title / Current Tab */}
-        <View style={styles.centerSection}>
-          <Text style={styles.tabHeading} numberOfLines={1}>
+          <Text style={styles.pageTitle} numberOfLines={1}>
             {title}
           </Text>
         </View>
@@ -93,45 +89,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#1B2B5E',
     paddingHorizontal: 16,
-    paddingTop: 6,
-    paddingBottom: 10,
+    paddingTop: 8,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#2A3C72',
   },
   leftSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1.2,
+    flex: 1,
+    paddingRight: 12,
   },
   logoWrap: {
-    marginRight: 8,
+    marginRight: 10,
   },
-  brandTitle: {
-    fontSize: 14,
-    fontWeight: '900',
+  pageTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#FFFFFF',
     letterSpacing: 0.2,
-  },
-  brandSubtitle: {
-    fontSize: 9.5,
-    color: '#DFB53B',
-    fontWeight: '700',
-  },
-  centerSection: {
-    flex: 1.5,
-    alignItems: 'center',
-  },
-  tabHeading: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: '#F8FAFC',
-    textAlign: 'center',
   },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    flex: 1,
     gap: 10,
   },
   iconButton: {
