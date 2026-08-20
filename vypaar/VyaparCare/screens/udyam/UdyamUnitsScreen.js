@@ -48,7 +48,6 @@ export default function UdyamUnitsScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <ScreenHeader title="Plant / Unit Details" />
       <UdyamStepper currentStep={6} />
 

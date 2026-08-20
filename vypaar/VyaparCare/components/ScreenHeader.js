@@ -6,8 +6,9 @@ import { COLORS } from '../constants/theme';
 
 /**
  * Global ScreenHeader Component
+ * - Navy #1B2B5E theme by default for seamless status bar + header integration
  * - Left side: Back arrow icon (←) Pressable (hidden when showBack=false)
- * - Center: Centered screen title
+ * - Center: Centered screen title in bold white text
  * - Right: Balanced placeholder or optional rightElement
  * - Supports showBack prop (default: true)
  */
@@ -16,7 +17,7 @@ export default function ScreenHeader({
   showBack = true,
   onBack,
   rightElement,
-  theme = 'light',
+  theme = 'navy',
 }) {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -32,14 +33,14 @@ export default function ScreenHeader({
     }
   };
 
-  const isNavy = theme === 'navy';
+  const isLight = theme === 'light';
 
   return (
     <View
       style={[
         styles.header,
-        isNavy && styles.headerNavy,
-        { paddingTop: Math.max(insets.top, 12) + 6 },
+        isLight ? styles.headerLight : styles.headerNavy,
+        { paddingTop: Math.max(insets.top, 10) + 6 },
       ]}
     >
       {/* Left Back Button or Placeholder */}
@@ -47,7 +48,7 @@ export default function ScreenHeader({
         <Pressable
           style={({ pressed }) => [
             styles.backButton,
-            isNavy && styles.backButtonNavy,
+            isLight ? styles.backButtonLight : styles.backButtonNavy,
             pressed && styles.buttonPressed,
           ]}
           onPress={handleBack}
@@ -55,7 +56,9 @@ export default function ScreenHeader({
           accessibilityLabel="Go back"
           accessibilityRole="button"
         >
-          <Text style={[styles.backIcon, isNavy && styles.backIconNavy]}>←</Text>
+          <Text style={[styles.backIcon, isLight ? styles.backIconLight : styles.backIconNavy]}>
+            ←
+          </Text>
         </Pressable>
       ) : (
         <View style={styles.backButtonPlaceholder} />
@@ -63,7 +66,7 @@ export default function ScreenHeader({
 
       {/* Center Title */}
       <Text
-        style={[styles.title, isNavy && styles.titleNavy]}
+        style={[styles.title, isLight ? styles.titleLight : styles.titleNavy]}
         numberOfLines={1}
       >
         {title}
@@ -84,58 +87,66 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.white,
     paddingHorizontal: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
   },
   headerNavy: {
     backgroundColor: '#1B2B5E',
     borderBottomColor: '#2A3C72',
   },
+  headerLight: {
+    backgroundColor: COLORS.white,
+    borderBottomColor: '#F1F5F9',
+  },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
   },
   backButtonNavy: {
     backgroundColor: 'rgba(255, 255, 255, 0.12)',
   },
+  backButtonLight: {
+    backgroundColor: '#F1F5F9',
+  },
   buttonPressed: {
     opacity: 0.75,
     transform: [{ scale: 0.95 }],
   },
   backIcon: {
-    fontSize: 22,
-    lineHeight: 24,
-    color: '#1B2B5E',
+    fontSize: 20,
+    lineHeight: 22,
     fontWeight: 'bold',
   },
   backIconNavy: {
     color: '#FFFFFF',
   },
+  backIconLight: {
+    color: '#1B2B5E',
+  },
   title: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 17,
+    fontSize: 16.5,
     fontWeight: 'bold',
-    color: '#1B2B5E',
     paddingHorizontal: 8,
   },
   titleNavy: {
     color: '#FFFFFF',
   },
+  titleLight: {
+    color: '#1B2B5E',
+  },
   backButtonPlaceholder: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
   },
   rightWrap: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
   },

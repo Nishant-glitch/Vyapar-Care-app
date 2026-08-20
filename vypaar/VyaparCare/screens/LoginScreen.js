@@ -76,7 +76,6 @@ export default function LoginScreen({ navigation }) {
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.scrollContent}

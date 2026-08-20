@@ -72,7 +72,6 @@ export default function SplashScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar hidden barStyle="light-content" backgroundColor={COLORS.primaryDark} />
 
       <View style={styles.centerBlock}>
         <Animated.View

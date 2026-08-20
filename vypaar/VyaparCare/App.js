@@ -1,6 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
+import { SafeAreaView, StatusBar, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from './contexts/AuthContext';
@@ -159,21 +160,28 @@ const NO_BACK = { gestureEnabled: false };
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <PLCFormProvider>
-          <TMFormProvider>
-            <FSSAIFormProvider>
-              <GSTFormProvider>
-                <UdyamFormProvider>
-                  <ITRFormProvider>
-                    <IECFormProvider>
-                      <OtherFormProvider>
-                        <NavigationContainer>
-                          <Stack.Navigator
-                            initialRouteName="Splash"
-                            screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
-                          >
+    <SafeAreaProvider style={{ flex: 1, backgroundColor: '#1B2B5E' }}>
+      <StatusBar barStyle="light-content" backgroundColor="#1B2B5E" />
+      <SafeAreaView style={{ flex: 0, backgroundColor: '#1B2B5E' }} />
+      <View style={{ flex: 1, backgroundColor: '#1B2B5E' }}>
+        <AuthProvider>
+          <PLCFormProvider>
+            <TMFormProvider>
+              <FSSAIFormProvider>
+                <GSTFormProvider>
+                  <UdyamFormProvider>
+                    <ITRFormProvider>
+                      <IECFormProvider>
+                        <OtherFormProvider>
+                          <NavigationContainer>
+                            <Stack.Navigator
+                              initialRouteName="Splash"
+                              screenOptions={{
+                                headerShown: false,
+                                animation: 'slide_from_right',
+                                contentStyle: { backgroundColor: '#1B2B5E' },
+                              }}
+                            >
                           {/* ---------- Auth ---------- */}
                           <Stack.Screen name="Splash" component={SplashScreen} options={NO_BACK} />
                           <Stack.Screen name="Login" component={LoginScreen} options={NO_BACK} />
@@ -382,6 +390,7 @@ export default function App() {
         </TMFormProvider>
       </PLCFormProvider>
     </AuthProvider>
-  </SafeAreaProvider>
+  </View>
+</SafeAreaProvider>
 );
 }

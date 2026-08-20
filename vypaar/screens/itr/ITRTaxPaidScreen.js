@@ -55,7 +55,6 @@ export default function ITRTaxPaidScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <ScreenHeader title="TDS Paid & Refund Bank" />
       <ITRStepper currentStep={8} />
 

@@ -28,7 +28,6 @@ export default function GSTConfirmationScreen({ route, navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <ScreenHeader title="Application Submitted" showBack={false} />
       <GSTStepper currentStep={10} />
 

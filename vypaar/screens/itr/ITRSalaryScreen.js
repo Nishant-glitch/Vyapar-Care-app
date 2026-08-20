@@ -53,7 +53,6 @@ export default function ITRSalaryScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <ScreenHeader title="Salary & Pension Income" />
       <ITRStepper currentStep={3} />
 

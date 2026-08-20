@@ -124,7 +124,6 @@ export default function UploadDocumentsScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
 
       <ScreenHeader title="Upload Documents" />
 

@@ -44,7 +44,6 @@ export default function ITRDeductionsScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <ScreenHeader title="Deductions & Tax Regime" />
       <ITRStepper currentStep={7} />
 

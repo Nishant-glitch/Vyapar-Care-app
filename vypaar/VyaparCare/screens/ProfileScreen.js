@@ -148,10 +148,9 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right', 'top']}>
-      <StatusBar barStyle="light-content" backgroundColor="#1B2B5E" />
-
-      {/* Top Header */}
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#1B2B5E' }} edges={['left', 'right', 'top']}>
+      <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
+        {/* Top Header */}
       <View style={styles.headerRow}>
         <Pressable
           style={({ pressed }) => [styles.backBtn, pressed && styles.btnPressed]}
@@ -303,6 +302,7 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }

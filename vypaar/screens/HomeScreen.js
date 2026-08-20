@@ -206,8 +206,8 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right', 'top']}>
-      <StatusBar barStyle="light-content" backgroundColor="#1B2B5E" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#1B2B5E' }} edges={['left', 'right', 'top']}>
+      <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
 
       {/* ========================================================================= */}
       {/* 1. HEADER (Navy #1B2B5E, rounded bottom, greetings, bell, avatar)          */}
@@ -611,6 +611,7 @@ export default function HomeScreen() {
 
       {/* Persistent 5-Tab Navigation Bar */}
       <BottomNav activeTab="Dashboard" />
+      </View>
     </SafeAreaView>
   );
 }

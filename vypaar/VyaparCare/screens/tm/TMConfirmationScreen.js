@@ -29,7 +29,6 @@ export default function TMConfirmationScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryDark} />
 
       <ScreenHeader
         title="Application Submitted"

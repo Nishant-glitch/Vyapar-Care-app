@@ -35,7 +35,6 @@ export default function OtherConfirmationScreen({ route, navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <ScreenHeader title="Request Submitted" showBack={false} />
       <OtherServicesStepper currentStep={9} />
 

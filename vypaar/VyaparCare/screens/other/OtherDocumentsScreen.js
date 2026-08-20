@@ -57,7 +57,6 @@ export default function OtherDocumentsScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <ScreenHeader title="Dynamic Document Checklist" />
       <OtherServicesStepper currentStep={5} />
 

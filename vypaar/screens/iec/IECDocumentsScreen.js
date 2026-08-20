@@ -57,7 +57,6 @@ export default function IECDocumentsScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <ScreenHeader title="Required Documents Checklist" />
       <IECStepper currentStep={8} />
 

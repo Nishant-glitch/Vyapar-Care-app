@@ -46,7 +46,6 @@ export default function UdyamBusinessScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <ScreenHeader title="Enterprise Details" />
       <UdyamStepper currentStep={3} />
 

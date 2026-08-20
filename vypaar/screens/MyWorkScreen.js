@@ -162,7 +162,6 @@ export default function MyWorkScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'top']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
 
       {/* Top Header Section */}
       <View style={styles.header}>

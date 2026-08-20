@@ -150,7 +150,6 @@ export default function OtpScreen({ navigation, route }) {
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
 
       <Pressable style={styles.backButton} onPress={handleBack} hitSlop={12}>
         <Text style={styles.backIcon}>‹</Text>

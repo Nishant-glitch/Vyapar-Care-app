@@ -123,7 +123,6 @@ export default function PaymentSuccessScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
 
       <View style={styles.center}>
         <Animated.View

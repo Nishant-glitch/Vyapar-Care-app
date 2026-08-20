@@ -61,7 +61,6 @@ export default function FSSAIEligibilityScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
 
       <ScreenHeader
         title="FSSAI Food License"

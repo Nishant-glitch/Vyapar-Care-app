@@ -98,10 +98,9 @@ export default function MarketingScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right', 'top']}>
-      <StatusBar barStyle="light-content" backgroundColor="#1B2B5E" />
-
-      {/* Persistent App Top Bar */}
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#1B2B5E' }} edges={['left', 'right', 'top']}>
+      <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
+        {/* Persistent App Top Bar */}
       <AppTopBar
         title="Marketing Services"
         onOpenProfile={() => setProfileModalVisible(true)}
@@ -185,6 +184,7 @@ export default function MarketingScreen() {
 
       {/* Persistent Bottom Navigation */}
       <BottomNav activeTab="Marketing" />
+      </View>
     </SafeAreaView>
   );
 }

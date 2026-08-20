@@ -40,7 +40,6 @@ export default function UdyamPaymentScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <ScreenHeader title="Assisted-Filing Fee Payment" />
       <UdyamStepper currentStep={11} />
 

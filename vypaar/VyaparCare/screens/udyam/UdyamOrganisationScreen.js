@@ -76,7 +76,6 @@ export default function UdyamOrganisationScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <ScreenHeader title={`${orgObj?.label || 'Organisation'} Details`} />
       <UdyamStepper currentStep={4} />
 

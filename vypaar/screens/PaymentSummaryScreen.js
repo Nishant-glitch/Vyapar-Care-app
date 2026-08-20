@@ -39,7 +39,6 @@ export default function PaymentSummaryScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
 
       <ScreenHeader title="Payment Summary" />
 

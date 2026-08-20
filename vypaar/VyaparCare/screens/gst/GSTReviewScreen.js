@@ -77,7 +77,6 @@ export default function GSTReviewScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <ScreenHeader title="Review GST Application" />
       <GSTStepper currentStep={8} />
 
