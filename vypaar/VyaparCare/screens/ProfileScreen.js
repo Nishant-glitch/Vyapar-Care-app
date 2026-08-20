@@ -1,5 +1,4 @@
 import { useNavigation } from '@react-navigation/native';
-import * as DocumentPicker from 'expo-document-picker';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -13,6 +12,8 @@ import {
   Text,
   View,
 } from 'react-native';
+import DocumentPicker from 'react-native-document-picker';
+import { launchImageLibrary } from 'react-native-image-picker';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
@@ -34,34 +35,71 @@ export default function ProfileScreen() {
 
   const handlePickAndUploadPhoto = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['image/*'],
-        copyToCacheDirectory: true,
-      });
+      let fileUri = null;
+      let fileName = null;
+      let fileType = 'image/jpeg';
 
-      if (result.canceled || !result.assets || result.assets.length === 0) {
-        return;
+      // 1. Try launchImageLibrary first (react-native-image-picker)
+      try {
+        const imageResult = await launchImageLibrary({
+          mediaType: 'photo',
+          quality: 0.8,
+          selectionLimit: 1,
+        });
+
+        if (imageResult.didCancel) {
+          return;
+        }
+
+        if (imageResult.assets && imageResult.assets.length > 0) {
+          const asset = imageResult.assets[0];
+          fileUri = asset.uri;
+          fileName = asset.fileName || `avatar_${Date.now()}.jpg`;
+          fileType = asset.type || 'image/jpeg';
+        }
+      } catch (pickerErr) {
+        console.log('launchImageLibrary fallback to DocumentPicker:', pickerErr);
       }
 
-      const file = result.assets[0];
-      setUploading(true);
+      // 2. Fallback to DocumentPicker.pick if launchImageLibrary not available
+      if (!fileUri) {
+        try {
+          const docResult = await DocumentPicker.pick({
+            type: [DocumentPicker.types.images],
+          });
+          if (docResult && docResult.length > 0) {
+            const doc = docResult[0];
+            fileUri = doc.uri;
+            fileName = doc.name || `avatar_${Date.now()}.jpg`;
+            fileType = doc.type || 'image/jpeg';
+          }
+        } catch (docErr) {
+          if (DocumentPicker.isCancel(docErr)) {
+            return;
+          }
+          throw docErr;
+        }
+      }
 
-      let finalPhotoUrl = file.uri;
+      if (!fileUri) return;
+
+      setUploading(true);
+      let finalPhotoUrl = fileUri;
 
       if (isSupabaseConfigured && user?.id) {
         try {
-          const fileExt = file.name ? file.name.split('.').pop() : 'jpg';
+          const fileExt = fileName ? fileName.split('.').pop() : 'jpg';
           const filePath = `avatar_${user.id}_${Date.now()}.${fileExt}`;
 
-          // Fetch file blob
-          const response = await fetch(file.uri);
+          // Fetch file blob for Supabase storage upload
+          const response = await fetch(fileUri);
           const blob = await response.blob();
 
-          // Upload to Supabase 'avatars' bucket
+          // Upload to Supabase 'avatars' storage bucket
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('avatars')
             .upload(filePath, blob, {
-              contentType: file.mimeType || 'image/jpeg',
+              contentType: fileType,
               upsert: true,
             });
 
@@ -85,8 +123,10 @@ export default function ProfileScreen() {
       Alert.alert('Success', 'Profile photo updated successfully!');
     } catch (err) {
       setUploading(false);
-      console.warn('Image picker error:', err);
-      Alert.alert('Error', 'Could not update profile photo.');
+      if (!DocumentPicker.isCancel(err)) {
+        console.warn('Image picker error:', err);
+        Alert.alert('Error', 'Could not update profile photo.');
+      }
     }
   };
 

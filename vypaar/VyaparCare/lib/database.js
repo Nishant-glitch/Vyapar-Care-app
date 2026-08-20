@@ -156,7 +156,7 @@ export async function getDocuments(orderUuid) {
 
 /**
  * File ko Storage me daal kar document row update karta hai.
- * `file` = { uri, name, mimeType } (expo-document-picker ka asset)
+ * `file` = { uri, name, mimeType } (react-native-document-picker asset)
  */
 export async function uploadDocument({ orderUuid, documentId, file }) {
   const ext = (file.name?.split('.').pop() || 'bin').toLowerCase();
